@@ -77,20 +77,27 @@
      (render [_]
              (dom/button #js {:className "centered" :onClick (fn [_] (put! (:game-state opts) :reset))} "Reset Game"))))
 
-(defn game-view [game owner opts]
-  "Om's view for the game view."
+(defn board-view [game owner opts]
+  "Om's view for the board."
   (reify
     om/IRenderState
     (render-state [_ state]
-                  (dom/div #js {:className "game"}
-                           (dom/h1 nil "Tic Tac Toe")
-                           (om/build plays-view game {:opts opts})
-                           (om/build winner-view game {:opts opts})
-                           (dom/div #js {:className "coso"}
-                                    (apply dom/div (centered "board")
-                                           (mapv #(om/build line-view % {:opts opts})
-                                                 (first (partition 3 (:tiles game))))))
-                           (om/build reset-button-view game {:opts opts})))
+                  (apply dom/div (centered "board")
+                         (mapv #(om/build line-view % {:opts opts})
+                               (first (partition 3 (:tiles game))))))))
+
+(defn game-view [game owner opts]
+  "Om's view for the whole game."
+  (reify
+    om/IRenderState
+    (render-state [_ state]
+                  (let [view-opts {:opts opts}]
+                    (dom/div #js {:className "game"}
+                             (dom/h1 nil "Tic Tac Toe")
+                             (om/build plays-view game view-opts)
+                             (om/build winner-view game view-opts)
+                             (om/build board-view game view-opts)
+                             (om/build reset-button-view game view-opts))))
     om/IWillMount
       (will-mount [_]
                   (go-loop []
