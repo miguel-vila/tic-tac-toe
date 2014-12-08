@@ -8,27 +8,32 @@
 
 (enable-console-print!)
 
-(def app-state (atom (create-game)))
+(def app-state
+  "The app state which is a game map."
+  (atom (create-game)))
 
-(defn player-style [mark]
+(defn player-className [mark]
+  "Returns a string with the name of the player's class name."
   (cond (not mark) nil
-        (= mark "X") "playerX"
-        (= mark "O") "playerO"))
+        :else (str "player" mark)))
 
-(defn tile-style [tile]
+(defn tile-className [tile]
+  "Returns a string with the tile's class name."
   (if (get tile :mark)
-    (str "marked-tile " (player-style (get tile :mark)))
+    (str "marked-tile " (player-className (get tile :mark)))
     "tile"))
 
 (defn tile-view [tile owner opts]
+  "Om's view for a single game's tile."
   (reify
     om/IRender
     (render [_]
-            (dom/div #js {:className (tile-style tile)
+            (dom/div #js {:className (tile-className tile)
                           :onClick (fn [_]
                                      (put! (:moves opts) {:x (:x @tile) :y (:y @tile)}))} (:mark tile)))))
 
 (defn line-view [tiles owner opts]
+  "Om's view for a line of tiles."
   (reify
     om/IRender
     (render [_]
@@ -36,12 +41,14 @@
                    (mapv #(om/build tile-view % {:opts opts}) tiles)))))
 
 (defn player-title-view [player owner opts]
+  "Om's view for a player, which consists of just a div with text."
   (reify
     om/IRender
     (render [_]
-            (dom/div (centered-text (player-style player)) player))))
+            (dom/div (centered-text (player-className player)) player))))
 
 (defn plays-view [game owner opts]
+  "Om's view for the player that plays next."
   (reify
     om/IRender
     (render [_]
@@ -54,6 +61,7 @@
                          (om/build player-title-view (:plays game) {:opts opts})))))))
 
 (defn winner-view [game owner opts]
+  "Om's view for the game's winner."
   (reify
     om/IRender
     (render [_]
@@ -63,12 +71,14 @@
                        (om/build player-title-view (:winner game) {:opts opts}))))))
 
 (defn reset-button-view [game owner opts]
+  "Om's view for the reset game button."
   (reify
     om/IRender
      (render [_]
              (dom/button #js {:className "centered" :onClick (fn [_] (put! (:game-state opts) :reset))} "Reset Game"))))
 
-(defn board-view [game owner opts]
+(defn game-view [game owner opts]
+  "Om's view for the game view."
   (reify
     om/IRenderState
     (render-state [_ state]
@@ -94,7 +104,7 @@
                            (recur)))))
 
 (om/root
-  board-view
+  game-view
   app-state
   {:target (. js/document (getElementById "app"))
    :opts {:moves (chan)

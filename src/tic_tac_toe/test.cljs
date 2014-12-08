@@ -2,6 +2,9 @@
   (:require [tic-tac-toe.game :as game]
             [tic-tac-toe.utils :refer [map-map-values]]))
 
+;;"Tests" (really just a bunch of function calls which I use in the repl to test things)"
+;;To be migrated to a real testing suite.
+
 (def g0 {:tiles [
                       [{:x 0 :y 0 :mark "X"},{:x 0 :y 1 :mark "O"},{:x 0 :y 2 :mark "X"}],
                       [{:x 1 :y 0},{:x 1 :y 1 :mark "X"},{:x 1 :y 2 :mark "X"}],
