@@ -4,7 +4,7 @@
             [om.dom :as dom :include-macros true]
             [cljs.core.async :refer [put! chan <! >! close! timeout]]
             [tic-tac-toe.game :refer [create-game play]]
-            [tic-tac-toe.utils :refer [display-if centered centered-text]]))
+            [tic-tac-toe.utils :refer [centered centered-text]]))
 
 (enable-console-print!)
 
@@ -52,13 +52,17 @@
   (reify
     om/IRender
     (render [_]
-            (let [plays (:plays game)
-                  draw? (:draw? game)]
-              (if draw?
-                (dom/h2 (centered-text) "Draw!")
-                (dom/div #js {:style (display-if plays)}
-                         (dom/h2 (centered-text) "Plays: ")
-                         (om/build player-title-view (:plays game) {:opts opts})))))))
+            (let [plays (:plays game)]
+              (dom/div #js {}
+                       (dom/h2 (centered-text) "Plays: ")
+                       (om/build player-title-view (:plays game) {:opts opts}))))))
+
+(defn draws-view [game owner opts]
+  "Om's view for draws."
+  (reify
+    om/IRender
+    (render [_]
+            (dom/h2 (centered-text) "Draw!"))))
 
 (defn winner-view [game owner opts]
   "Om's view for the game's winner."
@@ -66,7 +70,7 @@
     om/IRender
     (render [_]
             (let [winner (:winner game)]
-              (dom/div #js {:style (display-if winner)}
+              (dom/div #js {}
                        (dom/h2 (centered-text) "Winner: ")
                        (om/build player-title-view (:winner game) {:opts opts}))))))
 
@@ -94,8 +98,10 @@
                   (let [view-opts {:opts opts}]
                     (dom/div #js {:className "game"}
                              (dom/h1 nil "Tic Tac Toe")
-                             (om/build plays-view game view-opts)
-                             (om/build winner-view game view-opts)
+                             (cond
+                              (:plays game) (om/build plays-view game view-opts)
+                              (:winner game) (om/build winner-view game view-opts)
+                              (:draw? game) (om/build draws-view game view-opts))
                              (om/build board-view game view-opts)
                              (om/build reset-button-view game view-opts))))
     om/IWillMount

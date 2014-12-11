@@ -4,12 +4,6 @@
   "Maps the values from a map."
   (reduce (fn [m2 [k v]] (assoc m2 k (f v))) {} m))
 
-(defn display-if [display]
-  "Returns a js object with a display attribute set to 'none' if the argument is false and an empty js object otherwise."
-  (if display
-    #js {}
-    #js {:display "none"}))
-
 (defn with-class [default-class-name]
   "Curried function to return a js object with a default class name and (optionally) other class name."
   (fn
