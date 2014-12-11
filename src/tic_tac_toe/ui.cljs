@@ -90,6 +90,21 @@
                          (mapv #(om/build line-view % {:opts opts})
                                (first (partition 3 (:tiles game))))))))
 
+(defn game-state-channel-handling [game game-state-chan]
+  "Handles the :game-state channel"
+  (go-loop []
+           (let [_ (<! game-state-chan)]
+             (om/transact! game (fn [_] (create-game))))
+           (recur)))
+
+(defn moves-channel-handling [game moves-chan]
+  "Handles the moves channel"
+  (go-loop []
+           (let [{:keys [x y]} (<! moves-chan)
+                 mark (:plays @game)]
+             (om/transact! game #(play mark % x y)))
+           (recur)))
+
 (defn game-view [game owner opts]
   "Om's view for the whole game."
   (reify
@@ -106,15 +121,8 @@
                              (om/build reset-button-view game view-opts))))
     om/IWillMount
       (will-mount [_]
-                  (go-loop []
-                           (let [_ (<! (:game-state opts))]
-                             (om/transact! game (fn [_] (create-game))))
-                           (recur))
-                  (go-loop []
-                           (let [{:keys [x y]} (<! (:moves opts))
-                                 mark (:plays @game)]
-                             (om/transact! game #(play mark % x y)))
-                           (recur)))))
+                  (game-state-channel-handling game (:game-state opts))
+                  (moves-channel-handling game (:moves opts)))))
 
 (om/root
   game-view
