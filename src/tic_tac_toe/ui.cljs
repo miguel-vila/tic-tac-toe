@@ -86,9 +86,12 @@
   (reify
     om/IRenderState
     (render-state [_ state]
-                  (apply dom/div (centered "board")
-                         (mapv #(om/build line-view % {:opts opts})
-                               (first (partition 3 (:tiles game))))))))
+                  (dom/table #js {:className "centered"}
+                    (dom/tr #js {}
+                     (dom/td #js {}
+                      (apply dom/div #js {:className "board"}
+                             (mapv #(om/build line-view % {:opts opts})
+                                   (first (partition 3 (:tiles game)))))))))))
 
 (defn game-state-channel-handling [game game-state-chan]
   "Handles the :game-state channel"
