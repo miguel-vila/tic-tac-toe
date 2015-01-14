@@ -2,8 +2,8 @@
   :description "A simple tic-tac-toe game"
   :url "http://github.com/miguel-vila/tic-tac-toe-om"
 
-  :dependencies [[org.clojure/clojure "1.6.0"]
-                 [org.clojure/clojurescript "0.0-2371"]
+  :dependencies [[org.clojure/clojure "1.7.0-alpha4"]
+                 [org.clojure/clojurescript "0.0-2496"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [om "0.7.3"]]
 
@@ -13,6 +13,14 @@
 
   :cljsbuild {
     :builds [
+    {
+       :id "test"
+       :source-paths ["src" "test"]
+       :notify-command ["phantomjs" "phantom/unit-test.js" "phantom/unit-test.html"]
+                        :compiler {:optimizations :whitespace
+                                   :pretty-print true
+                                   :output-to "target/testable.js"}
+    }
     {
       :id "dev"
       :source-paths ["src"]
@@ -33,4 +41,5 @@
         ;;:preamble ["react/react.min.js"]
         :externs ["externs/react.js"]
       }
-    }]})
+    }]
+    :test-commands {"test" ["phantomjs" "phantom/unit-test.js" "phantom/unit-test.html"]}})
