@@ -14,14 +14,6 @@
   :cljsbuild {
     :builds [
     {
-       :id "test"
-       :source-paths ["src" "test"]
-       :notify-command ["phantomjs" "phantom/unit-test.js" "phantom/unit-test.html"]
-                        :compiler {:optimizations :whitespace
-                                   :pretty-print true
-                                   :output-to "target/testable.js"}
-    }
-    {
       :id "dev"
       :source-paths ["src"]
       :compiler {
