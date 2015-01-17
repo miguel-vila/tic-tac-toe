@@ -1,2 +1,3 @@
 language: clojure
-script: "cd tic-tac-toe-cljs && lein cljsbuild test"
+before_install: cd tic-tac-toe-cljs
+script: "lein cljsbuild test"
