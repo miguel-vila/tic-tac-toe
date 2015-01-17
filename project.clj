@@ -36,7 +36,6 @@
       :source-paths ["src"]
       :compiler {
         :output-to "../public/tic_tac_toe.js"
-        :output-dir "../public/out"
         :optimizations :advanced
         ;;:preamble ["react/react.min.js"]
         :externs ["externs/react.js"]
