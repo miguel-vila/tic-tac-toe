@@ -1,2 +1,2 @@
 language: clojure
-script: "lein cljsbuild test"
+script: "cd tic-tac-toe-cljs && lein cljsbuild test"
