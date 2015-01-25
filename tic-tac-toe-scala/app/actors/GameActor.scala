@@ -1,13 +1,14 @@
 package actors
 
 import akka.actor.{Props, ActorRef, Actor}
+import com.nicta.rng.Rng
 import models._
 import scala.collection.mutable
 
 /**
  * Created by mglvl on 24/01/15.
  */
-class GameActor(playerX: ActorRef, playerO: ActorRef) extends Actor {
+class GameActor(playerX: ActorRef, playerO: ActorRef, rng: Rng[Player] = Game.randomPlayer()) extends Actor {
   import context._
 
   def broadcast(message: Any): Unit = {
@@ -20,21 +21,21 @@ class GameActor(playerX: ActorRef, playerO: ActorRef) extends Actor {
     case PlayerO => playerO
   }
 
-  def receive = {
-    val game = Game()
-    sendTurnMessages(game)
-    playing(game)
-  }
-
   def sendTurnMessages(game: ActiveGame): Unit = {
     getActor(game.currentPlayer) ! MakeYourMove
     getActor(game.otherPlayer) ! Wait
   }
 
+  def receive = {
+    val game = Game.newWithRandomPlayer(rng)
+    sendTurnMessages(game)
+    playing(game)
+  }
+
   def playing(game: ActiveGame): Receive = {
     case PlayAtPosition(position) =>
       val otherPlayer = game.otherPlayer
-      getActor(otherPlayer) ! PlayerPutAMarkInPosition(otherPlayer, position)
+      getActor(otherPlayer) ! PlayerPutAMarkInPosition(game.currentPlayer, position)
       val newGame = game.putMark(game.currentPlayer, position)
       newGame match {
         case activeGame: ActiveGame =>
@@ -61,5 +62,5 @@ class GameActor(playerX: ActorRef, playerO: ActorRef) extends Actor {
 }
 
 object GameActor {
-  def props(playerX: ActorRef, playerO: ActorRef) = Props(new GameActor(playerX,playerO))
+  def props(playerX: ActorRef, playerO: ActorRef, rng: Rng[Player] = Game.randomPlayer()) = Props(new GameActor(playerX,playerO,rng))
 }
