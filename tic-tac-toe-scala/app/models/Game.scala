@@ -1,45 +1,63 @@
 package models
 
+import exceptions.IncorrectPlayerError
 import scala.util.Random
 
-case class Game private(
-                 nextPlayer: Option[Player],
-                 private val board: Board,
-                 winner: Option[Winner],
-                 draw: Boolean) {
+sealed trait Game {
+  def board: Board
+  def isDraw: Boolean
+  def hasWinner: Boolean
+  def isFinished: Boolean = isDraw || hasWinner
+}
 
-  def otherPlayer: Option[Player] = for {
-    player <- nextPlayer
-  } yield {
-    if(player == PlayerX) {
+case class ActiveGame(board: Board, currentPlayer: Player) extends Game {
+
+  def isDraw: Boolean = false
+
+  def hasWinner: Boolean = false
+
+  def otherPlayer: Player =
+    if(currentPlayer == PlayerX) {
       PlayerO
     } else {
       PlayerX
     }
+
+  def putMark(mark: Player, position: Position): Game = {
+    if(currentPlayer != mark) {
+      throw IncorrectPlayerError
+    } else {
+      val nextBoard = board.putMark(mark, position)
+      nextBoard.winner match {
+        case Some(winner) => WonGame(nextBoard, winner)
+        case None =>
+          if(nextBoard.somebodyCanWin) {
+            ActiveGame(nextBoard, otherPlayer)
+          } else {
+            DrawGame(nextBoard)
+          }
+      }
+    }
   }
 
-  private def putMark(mark: Player)(position: Position): Game = {
-    val nextBoard = board.putMark(mark, position)
-    val winner = nextBoard.winner
-    val nextPlayer = if(winner.isDefined) None else otherPlayer
-    val draw = !nextBoard.somebodyCanWin
-    Game(nextPlayer, nextBoard, winner, draw)
-  }
+}
 
-  def putX: Position => Game = putMark(PlayerX)
+case class WonGame(board: Board, winner: Winner) extends Game {
+  def isDraw: Boolean = false
+  def hasWinner: Boolean = true
+}
 
-  def putO: Position => Game = putMark(PlayerO)
-
+case class DrawGame(board: Board) extends Game {
+  def isDraw: Boolean = true
+  def hasWinner: Boolean = false
 }
 
 object Game {
 
-  def apply(): Game = {
-    Game(
-      nextPlayer = Some(randomPlayer()),
-      board = createInitialBoard,
-      winner = None,
-      draw = false
+  def apply(): ActiveGame = {
+    ActiveGame(
+      currentPlayer = randomPlayer(),
+      board = createInitialBoard
     )
   }
 

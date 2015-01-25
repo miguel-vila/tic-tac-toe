@@ -1,7 +1,7 @@
 package actors
 
 import akka.actor.{Props, ActorRef, Actor}
-import models.{PlayerX, Game, Player}
+import models._
 import scala.collection.mutable
 
 /**
@@ -14,19 +14,43 @@ class GameActor(player1: ActorRef, player2: ActorRef) extends Actor {
   val playerO = player2
   playerX ! YouArePlayerX
   playerO ! YouArePlayerO
+  
+  def broadcast(message: Any): Unit = {
+    playerX ! message
+    playerO ! message
+  }
 
-  var game =  Game()
+  def getActor(player: Player): ActorRef = player match {
+    case PlayerX => playerX
+    case PlayerO => playerO
+  }
 
-  def playing(nextPlayer: ActorRef, waitingPlayer: ActorRef): Receive = {
+  def receive = playing(Game())
+
+  def playing(game: ActiveGame): Receive = {
+    case PlayAtPosition(position) =>
+      val newGame = game.putMark(game.currentPlayer, position)
+      newGame match {
+        case drawGame: DrawGame =>
+          broadcast(Draw)
+          become(draw(drawGame))
+        case wonGame @ WonGame(_,winner) =>
+          broadcast(GameWon(winner))
+          become(gameWon(wonGame))
+        case activeGame: ActiveGame =>
+          getActor(activeGame.currentPlayer) ! Wait
+          getActor(activeGame.otherPlayer) ! MakeYourMove
+          become(playing(activeGame))
+      }
+  }
+
+  def draw(drawGame: DrawGame): Receive = {
     case _ =>
   }
 
-  def receive = {
-    val nextPlayer = if(game.nextPlayer.get == PlayerX) playerX else playerO
-    val waitingPlayer = if(game.otherPlayer.get == PlayerX) playerX else playerO
-    playing(nextPlayer, waitingPlayer)
+  def gameWon(wonGame: WonGame): Receive = {
+    case _ =>
   }
-
 
 
 }
