@@ -17,10 +17,7 @@ object UserSentMessage {
 
 sealed trait UserReceivedMessage
 case object NoPlayersAvailable extends UserReceivedMessage
-case class YouArePlayer(player: Player) extends UserReceivedMessage
-object YouArePlayerX extends YouArePlayer(PlayerX)
-object YouArePlayerO extends YouArePlayer(PlayerO)
-case class GameStarted(gameActor: ActorRef) extends UserReceivedMessage
+case class GameStarted(gameActor: ActorRef, youArePlayer: Player) extends UserReceivedMessage
 object Draw extends UserReceivedMessage
 case class GameWon(winner: Winner) extends UserReceivedMessage
 case object Wait extends UserReceivedMessage
@@ -29,7 +26,6 @@ case class PlayerPutAMarkInPosition(player: Player, position: Position) extends 
 
 object UserReceivedMessage {
   val NoPlayersAvailableResponse = "NoPlayersAvailable"
-  val YouArePlayerResponse = "YouArePlayer"
   val GameStartedResponse = "GameStarted"
   val DrawResponse = "Draw"
   val GameWonResponse = "GameWon"

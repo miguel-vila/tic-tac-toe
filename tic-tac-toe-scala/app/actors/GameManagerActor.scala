@@ -1,6 +1,7 @@
 package actors
 
 import akka.actor.{Props, ActorRef, Actor}
+import models.{PlayerO, PlayerX}
 import scala.collection.mutable
 
 /**
@@ -18,9 +19,8 @@ class GameManagerActor extends Actor {
         val player1 = originalSender
         val player2 = waitingPlayers.dequeue()
         val gameActor = system.actorOf(GameActor.props(player1, player2))
-        val gameStarted = GameStarted(gameActor)
-        player1 ! gameStarted
-        player2 ! gameStarted
+        player1 ! GameStarted(gameActor, PlayerX)
+        player2 ! GameStarted(gameActor, PlayerO)
       } else {
         if(!waitingPlayers.contains(originalSender)) {
           waitingPlayers enqueue originalSender

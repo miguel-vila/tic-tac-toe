@@ -7,14 +7,9 @@ import scala.collection.mutable
 /**
  * Created by mglvl on 24/01/15.
  */
-class GameActor(player1: ActorRef, player2: ActorRef) extends Actor {
+class GameActor(playerX: ActorRef, playerO: ActorRef) extends Actor {
   import context._
 
-  val playerX = player1
-  val playerO = player2
-  playerX ! YouArePlayerX
-  playerO ! YouArePlayerO
-  
   def broadcast(message: Any): Unit = {
     playerX ! message
     playerO ! message
@@ -25,7 +20,16 @@ class GameActor(player1: ActorRef, player2: ActorRef) extends Actor {
     case PlayerO => playerO
   }
 
-  def receive = playing(Game())
+  def receive = {
+    val game = Game()
+    sendTurnMessages(game)
+    playing(game)
+  }
+
+  def sendTurnMessages(game: ActiveGame): Unit = {
+    getActor(game.currentPlayer) ! MakeYourMove
+    getActor(game.otherPlayer) ! Wait
+  }
 
   def playing(game: ActiveGame): Receive = {
     case PlayAtPosition(position) =>
@@ -34,8 +38,7 @@ class GameActor(player1: ActorRef, player2: ActorRef) extends Actor {
       val newGame = game.putMark(game.currentPlayer, position)
       newGame match {
         case activeGame: ActiveGame =>
-          getActor(activeGame.currentPlayer) ! MakeYourMove
-          getActor(activeGame.otherPlayer) ! Wait
+          sendTurnMessages(activeGame)
           become(playing(activeGame))
         case drawGame: DrawGame =>
           broadcast(Draw)
@@ -58,5 +61,5 @@ class GameActor(player1: ActorRef, player2: ActorRef) extends Actor {
 }
 
 object GameActor {
-  def props(player1: ActorRef, player2: ActorRef) = Props(new GameActor(player1,player2))
+  def props(playerX: ActorRef, playerO: ActorRef) = Props(new GameActor(playerX,playerO))
 }

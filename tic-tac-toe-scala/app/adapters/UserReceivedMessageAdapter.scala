@@ -12,13 +12,22 @@ object UserReceivedMessageAdapter {
 
   def toJson(message: UserReceivedMessage): JsValue = {
     message match {
-      case NoPlayersAvailable => Json.obj(responseType -> UserReceivedMessage.NoPlayersAvailableResponse)
-      case YouArePlayer(player) => Json.obj(responseType -> UserReceivedMessage.YouArePlayerResponse, "player" -> player.toString)
-      case GameStarted(_) => Json.obj(responseType -> UserReceivedMessage.GameStartedResponse)
-      case Draw => Json.obj(responseType -> UserReceivedMessage.DrawResponse)
-      case GameWon(winner) => Json.obj(responseType -> UserReceivedMessage.GameWonResponse, "winner" -> WinnerAdapter.toJson(winner))
-      case Wait => Json.obj(responseType -> UserReceivedMessage.WaitResponse)
-      case MakeYourMove => Json.obj(responseType -> UserReceivedMessage.MakeYourMoveResponse)
+      case NoPlayersAvailable =>
+        Json.obj(responseType -> UserReceivedMessage.NoPlayersAvailableResponse)
+      case GameStarted(_, youArePlayer) =>
+        Json.obj(
+          responseType -> UserReceivedMessage.GameStartedResponse,
+          "youArePlayer" -> youArePlayer.toString)
+      case Draw =>
+        Json.obj(responseType -> UserReceivedMessage.DrawResponse)
+      case GameWon(winner) =>
+        Json.obj(
+          responseType -> UserReceivedMessage.GameWonResponse,
+          "winner" -> WinnerAdapter.toJson(winner))
+      case Wait =>
+        Json.obj(responseType -> UserReceivedMessage.WaitResponse)
+      case MakeYourMove =>
+        Json.obj(responseType -> UserReceivedMessage.MakeYourMoveResponse)
       case PlayerPutAMarkInPosition(player, position) =>
         Json.obj(
           responseType -> UserReceivedMessage.PlayerPutAMarkInPositionResponse,

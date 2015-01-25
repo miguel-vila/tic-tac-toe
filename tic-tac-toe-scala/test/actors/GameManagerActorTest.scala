@@ -27,8 +27,6 @@ with ImplicitSender
       player2.send(gameManager, StartGame)
       player1.expectMsgType[GameStarted]
       player2.expectMsgType[GameStarted]
-      player1.expectMsg(YouArePlayerO)
-      player2.expectMsg(YouArePlayerX)
     }
   }
 
