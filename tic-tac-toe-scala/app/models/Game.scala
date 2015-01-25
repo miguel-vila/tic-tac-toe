@@ -1,12 +1,12 @@
 package models
 
 import scala.util.Random
-import Game._
 
-case class Game(
-                 nextPlayer: Option[Player] = Some(randomPlayer()),
-                 private val board: Board = createInitialBoard,
-                 winner: Option[Player] = None) {
+case class Game private(
+                 nextPlayer: Option[Player],
+                 private val board: Board,
+                 winner: Option[Player],
+                 draw: Boolean) {
 
   def otherPlayer: Option[Player] = for {
     player <- nextPlayer
@@ -22,7 +22,8 @@ case class Game(
     val nextBoard = board.putMark(mark, position)
     val winner = nextBoard.winner
     val nextPlayer = if(winner.isDefined) None else otherPlayer
-    Game(nextPlayer, nextBoard, winner)
+    val draw = !nextBoard.somebodyCanWin
+    Game(nextPlayer, nextBoard, winner, draw)
   }
 
   def putX: Position => Game = putMark(PlayerX)
@@ -32,6 +33,15 @@ case class Game(
 }
 
 object Game {
+
+  def apply(): Game = {
+    Game(
+      nextPlayer = Some(randomPlayer()),
+      board = createInitialBoard,
+      winner = None,
+      draw = false
+    )
+  }
 
   def randomPlayer(): Player = {
     if(new Random().nextBoolean()) {
