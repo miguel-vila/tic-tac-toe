@@ -11,6 +11,7 @@ val akkaV = "2.3.6"
 libraryDependencies ++= Seq(
   cache,
   ws,
+  "com.nicta" %% "rng" % "1.2.1",
   "org.scalatest"       %%  "scalatest"                     % "2.2.1"   % "test",
   "com.typesafe.akka"   %%  "akka-testkit"                  % akkaV     % "test"
 )
