@@ -72,6 +72,35 @@ with ImplicitSender {
       playerX.expectMsg(gameWon)
     }
 
+    "Permite jugar una partida y notifica si hay empate" in {
+      val (playerX,playerO,gameActor) = setup()
+      checkTurnMessages(playerX, playerO)
+
+      def playX(x: Int, y: Int) = {
+        playerX.send(gameActor, playAt(x,y))
+        playerO.expectMsg(PlayerPutAMarkInPosition(PlayerX,Position(x,y)))
+        checkTurnMessages(playerO, playerX)
+      }
+
+      def playO(x: Int, y: Int) = {
+        playerO.send(gameActor, playAt(x,y))
+        playerX.expectMsg(PlayerPutAMarkInPosition(PlayerO,Position(x,y)))
+        checkTurnMessages(playerX, playerO)
+      }
+
+      playX(0,0)
+      playO(1,1)
+      playX(0,2)
+      playO(0,1)
+      playX(2,1)
+      playO(2,0)
+      playX(1,2)
+      playerO.send(gameActor, playAt(2,2))
+      playerX.expectMsg(PlayerPutAMarkInPosition(PlayerO,Position(2,2)))
+      playerO.expectMsg(Draw)
+      playerX.expectMsg(Draw)
+    }
+
 
   }
 
