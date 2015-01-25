@@ -36,39 +36,47 @@ case class Board(cells: Vector[Vector[Cell]]) extends AnyVal{
 
   private def columns: Vector[Vector[Cell]] = cells.transpose
 
-  private def rowWinner: Option[Player] = {
+  private[models] def rowWinner: Option[Winner] = {
     (for {
-      row <- cells.toStream
-    } yield Cell.sameMark(row)).flatten.headOption
+      (row, rowNumber) <- cells.toStream.zipWithIndex
+    } yield Cell.sameMark(row).map(player => Winner(player, RowLine(rowNumber)))).flatten.headOption
   }
 
-  private def somebodyCanWinInTheRows: Boolean = {
+  private[models] def somebodyCanWinInTheRows: Boolean = {
     (for {
       row <- cells.toStream
     } yield Cell.somebodyCanWin(row)).filter(identity).headOption.getOrElse(false)
   }
 
-  private def columnWinner: Option[Player] = {
+  private[models] def columnWinner: Option[Winner] = {
     (for {
-      column <- columns.toStream
-    } yield Cell.sameMark(column)).flatten.headOption
+      (column, columnNumber) <- columns.toStream.zipWithIndex
+    } yield Cell.sameMark(column).map(player => Winner(player, ColumnLine(columnNumber)))).flatten.headOption
   }
 
-  private def somebodyCanWinInTheColumns: Boolean = {
+  private[models] def somebodyCanWinInTheColumns: Boolean = {
     (for {
       column <- columns.toStream
     } yield Cell.somebodyCanWin(column)).filter(identity).headOption.getOrElse(false)
   }
 
-  private def NW_SE_DiagonalWinner: Option[Player] = Cell.sameMark(NW_SE_Diagonal)
+  private[models] def NW_SE_DiagonalWinner: Option[Winner] = {
+    for {
+      player <- Cell.sameMark(NW_SE_Diagonal)
+    } yield Winner(player, NW_SE_DiagonalLine)
+  }
 
-  private def somebodyCanWinInTheNW_SE_Diagonal: Boolean = Cell.somebodyCanWin(NW_SE_Diagonal)
+  private[models] def somebodyCanWinInTheNW_SE_Diagonal: Boolean = Cell.somebodyCanWin(NW_SE_Diagonal)
 
-  private def NE_SW_DiagonalWinner: Option[Player] = Cell.sameMark(NE_SW_Diagonal)
+  private[models] def NE_SW_DiagonalWinner: Option[Winner] = {
+    for {
+      player <- Cell.sameMark(NE_SW_Diagonal)
+    } yield Winner(player, NE_SW_DiagonalLine)
+  }
 
-  private def somebodyCanWinInTheNE_SW_Diagonal: Boolean = Cell.somebodyCanWin(NE_SW_Diagonal)
+  private[models] def somebodyCanWinInTheNE_SW_Diagonal: Boolean = Cell.somebodyCanWin(NE_SW_Diagonal)
 
-  def winner: Option[Player] = rowWinner orElse columnWinner orElse NW_SE_DiagonalWinner orElse NE_SW_DiagonalWinner
+  def winner: Option[Winner] = rowWinner orElse columnWinner orElse NW_SE_DiagonalWinner orElse NE_SW_DiagonalWinner
 
   def somebodyCanWin: Boolean = somebodyCanWinInTheRows || somebodyCanWinInTheColumns || somebodyCanWinInTheNW_SE_Diagonal || somebodyCanWinInTheNE_SW_Diagonal
 

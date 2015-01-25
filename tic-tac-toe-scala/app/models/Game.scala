@@ -5,7 +5,7 @@ import scala.util.Random
 case class Game private(
                  nextPlayer: Option[Player],
                  private val board: Board,
-                 winner: Option[Player],
+                 winner: Option[Winner],
                  draw: Boolean) {
 
   def otherPlayer: Option[Player] = for {
