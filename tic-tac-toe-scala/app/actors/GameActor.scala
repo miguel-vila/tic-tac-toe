@@ -29,18 +29,20 @@ class GameActor(player1: ActorRef, player2: ActorRef) extends Actor {
 
   def playing(game: ActiveGame): Receive = {
     case PlayAtPosition(position) =>
+      val otherPlayer = game.otherPlayer
+      getActor(otherPlayer) ! PlayerPutAMarkInPosition(otherPlayer, position)
       val newGame = game.putMark(game.currentPlayer, position)
       newGame match {
+        case activeGame: ActiveGame =>
+          getActor(activeGame.currentPlayer) ! MakeYourMove
+          getActor(activeGame.otherPlayer) ! Wait
+          become(playing(activeGame))
         case drawGame: DrawGame =>
           broadcast(Draw)
           become(draw(drawGame))
         case wonGame @ WonGame(_,winner) =>
           broadcast(GameWon(winner))
           become(gameWon(wonGame))
-        case activeGame: ActiveGame =>
-          getActor(activeGame.currentPlayer) ! Wait
-          getActor(activeGame.otherPlayer) ! MakeYourMove
-          become(playing(activeGame))
       }
   }
 
