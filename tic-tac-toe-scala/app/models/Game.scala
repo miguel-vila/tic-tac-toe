@@ -4,12 +4,30 @@ import scala.util.Random
 import Game._
 
 case class Game(
-                          nextPlayer: Option[Player] = Some(randomPlayer()),
-                          private val board: Board = createInitialBoard) {
+                 nextPlayer: Option[Player] = Some(randomPlayer()),
+                 private val board: Board = createInitialBoard,
+                 winner: Option[Player] = None) {
 
-  def otherPlayer: Option[Player] = nextPlayer map Game.otherPlayer
-  
-  def winner: Option[Player] = board.winner
+  def otherPlayer: Option[Player] = for {
+    player <- nextPlayer
+  } yield {
+    if(player == PlayerX) {
+      PlayerO
+    } else {
+      PlayerX
+    }
+  }
+
+  private def putMark(mark: Player)(position: Position): Game = {
+    val nextBoard = board.putMark(mark, position)
+    val winner = nextBoard.winner
+    val nextPlayer = if(winner.isDefined) None else otherPlayer
+    Game(nextPlayer, nextBoard, winner)
+  }
+
+  def putX: Position => Game = putMark(PlayerX)
+
+  def putO: Position => Game = putMark(PlayerO)
 
 }
 
@@ -23,14 +41,6 @@ object Game {
     }
   }
 
-  def otherPlayer(player: Player): Player = {
-    if(player == PlayerX) {
-      PlayerO
-    } else {
-      PlayerX
-    }
-  }
-
   def createInitialBoard: Board = {
     Board((0 to 2).toVector.map { x =>
       (0 to 2).toVector.map { y =>
@@ -38,4 +48,5 @@ object Game {
       }
     })
   }
+
 }

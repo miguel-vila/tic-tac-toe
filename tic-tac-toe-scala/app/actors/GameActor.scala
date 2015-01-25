@@ -1,7 +1,7 @@
 package actors
 
 import akka.actor.{Props, ActorRef, Actor}
-import models.{PlayerX, Game$, Player}
+import models.{PlayerX, Game, Player}
 import scala.collection.mutable
 
 /**
@@ -15,7 +15,7 @@ class GameActor(player1: ActorRef, player2: ActorRef) extends Actor {
   playerX ! YouArePlayerX
   playerO ! YouArePlayerO
 
-  var game = Game()
+  var game =  Game()
 
   def playing(nextPlayer: ActorRef, waitingPlayer: ActorRef): Receive = {
     case _ =>

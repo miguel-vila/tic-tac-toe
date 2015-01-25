@@ -1,9 +1,22 @@
 package models
 
+import exceptions.CellAlreadyMarkedError
+
 /**
  * Created by mglvl on 24/01/15.
  */
 case class Board(cells: Vector[Vector[Cell]]) extends AnyVal{
+
+  def putMark(mark: Player, position: Position): Board = {
+    val x = position.x
+    val y = position.y
+    if(cells(x)(y).mark.isDefined) {
+      throw new CellAlreadyMarkedError(position)
+    } else {
+      val newCell = Cell(Some(mark),position)
+      copy(cells.updated(x, cells(x).updated(y, newCell)))
+    }
+  }
 
   private def NW_SE_Diagonal: Vector[Cell] = {
     Vector(
@@ -22,7 +35,6 @@ case class Board(cells: Vector[Vector[Cell]]) extends AnyVal{
   }
 
   private def columns: Vector[Vector[Cell]] = cells.transpose
-
 
   private def rowWinner: Option[Player] = {
     (for {
