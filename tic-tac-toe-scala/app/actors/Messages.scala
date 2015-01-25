@@ -6,18 +6,34 @@ import models._
 /**
  * Created by mglvl on 24/01/15.
  */
-sealed trait UserSentMessages
-case object StartGame extends UserSentMessages
-case class PlayAtPosition(position: Position) extends UserSentMessages
+sealed trait UserSentMessage
+case object StartGame extends UserSentMessage
+case class PlayAtPosition(position: Position) extends UserSentMessage
 
-sealed trait UserReceivedMessages
-case object NoPlayersAvailable extends UserReceivedMessages
-class YouArePlayer(player: Player) extends UserReceivedMessages
-case object YouArePlayerX extends YouArePlayer(PlayerX)
-case object YouArePlayerO extends YouArePlayer(PlayerO)
-case class GameStarted(gameActor: ActorRef) extends UserReceivedMessages
-object Draw extends UserReceivedMessages
-case class GameWon(winner: Winner) extends UserReceivedMessages
-case object Wait extends UserReceivedMessages
-case object MakeYourMove extends UserReceivedMessages
-case class PlayerPutAMarkInPosition(player: Player, position: Position) extends UserReceivedMessages
+object UserSentMessage {
+  val StartGameCommand = "StartGame"
+  val PlayAtPositionCommand = "PlayAtPosition"
+}
+
+sealed trait UserReceivedMessage
+case object NoPlayersAvailable extends UserReceivedMessage
+case class YouArePlayer(player: Player) extends UserReceivedMessage
+object YouArePlayerX extends YouArePlayer(PlayerX)
+object YouArePlayerO extends YouArePlayer(PlayerO)
+case class GameStarted(gameActor: ActorRef) extends UserReceivedMessage
+object Draw extends UserReceivedMessage
+case class GameWon(winner: Winner) extends UserReceivedMessage
+case object Wait extends UserReceivedMessage
+case object MakeYourMove extends UserReceivedMessage
+case class PlayerPutAMarkInPosition(player: Player, position: Position) extends UserReceivedMessage
+
+object UserReceivedMessage {
+  val NoPlayersAvailableResponse = "NoPlayersAvailable"
+  val YouArePlayerResponse = "YouArePlayer"
+  val GameStartedResponse = "GameStarted"
+  val DrawResponse = "Draw"
+  val GameWonResponse = "GameWon"
+  val WaitResponse = "Wait"
+  val MakeYourMoveResponse = "MakeYourMove"
+  val PlayerPutAMarkInPositionResponse = "PlayerPutAMarkInPosition"
+}
