@@ -33,7 +33,7 @@ class GameActor(playerX: ActorRef, playerO: ActorRef, rng: Rng[Player] = Game.ra
   }
 
   def playing(game: ActiveGame): Receive = {
-    case PlayAtPosition(position) =>
+    case PlayAtPosition(position) if sender() == getActor(game.currentPlayer) =>
       val otherPlayer = game.otherPlayer
       getActor(otherPlayer) ! PlayerPutAMarkInPosition(game.currentPlayer, position)
       val newGame = game.putMark(game.currentPlayer, position)
