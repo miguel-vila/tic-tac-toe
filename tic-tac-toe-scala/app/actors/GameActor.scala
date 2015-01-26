@@ -43,21 +43,12 @@ class GameActor(playerX: ActorRef, playerO: ActorRef, rng: Rng[Player] = Game.ra
           become(playing(activeGame))
         case drawGame: DrawGame =>
           broadcast(Draw)
-          become(draw(drawGame))
+          context.stop(self)
         case wonGame @ WonGame(_,winner) =>
           broadcast(GameWon(winner))
-          become(gameWon(wonGame))
+          context.stop(self)
       }
   }
-
-  def draw(drawGame: DrawGame): Receive = {
-    case _ =>
-  }
-
-  def gameWon(wonGame: WonGame): Receive = {
-    case _ =>
-  }
-
 
 }
 
