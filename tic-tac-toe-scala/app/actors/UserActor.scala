@@ -44,6 +44,9 @@ class UserActor(out: ActorRef) extends Actor with WithGameManager {
     case gameWon: GameWon =>
       respond(gameWon)
       become(noGameStarted)
+    case Draw =>
+      respond(Draw)
+      become(noGameStarted)
     case MakeYourMove =>
       respond(MakeYourMove)
       become(userTurn(thisPlayer, gameActor))
@@ -59,6 +62,9 @@ class UserActor(out: ActorRef) extends Actor with WithGameManager {
       become(waiting(thisPlayer, gameActor))
     case gameWon: GameWon =>
       respond(gameWon)
+      become(noGameStarted)
+    case Draw =>
+      respond(Draw)
       become(noGameStarted)
   }
 
