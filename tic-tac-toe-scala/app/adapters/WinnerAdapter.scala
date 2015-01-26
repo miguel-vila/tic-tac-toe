@@ -10,7 +10,7 @@ object WinnerAdapter {
 
   def toJson(winner: Winner): JsValue = {
     val lineJson = WinnerLineAdapter.toJson(winner.winnerLine)
-    Json.obj("winner" -> winner.player.toString, "winnerLine" -> lineJson)
+    Json.obj("player" -> winner.player.toString, "winnerLine" -> lineJson)
   }
   
 }

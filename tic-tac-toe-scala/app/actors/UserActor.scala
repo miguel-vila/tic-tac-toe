@@ -41,6 +41,9 @@ class UserActor(out: ActorRef) extends Actor with WithGameManager {
   def waiting(thisPlayer: Player, gameActor: ActorRef): Receive = {
     case playerPutAMark @ PlayerPutAMarkInPosition(otherPlayer, position) =>
       respond(playerPutAMark)
+    case gameWon: GameWon =>
+      respond(gameWon)
+      become(noGameStarted)
     case MakeYourMove =>
       respond(MakeYourMove)
       become(userTurn(thisPlayer, gameActor))
@@ -54,6 +57,9 @@ class UserActor(out: ActorRef) extends Actor with WithGameManager {
     case Wait =>
       respond(Wait)
       become(waiting(thisPlayer, gameActor))
+    case gameWon: GameWon =>
+      respond(gameWon)
+      become(noGameStarted)
   }
 
 }

@@ -2,6 +2,7 @@ package actors
 
 import akka.actor.{ActorRef, ActorSystem}
 import akka.testkit.{TestProbe, TestKit}
+import models.NW_SE_DiagonalLine
 import org.scalatest.{BeforeAndAfterEach, WordSpecLike, Matchers}
 import play.api.libs.json._
 import scala.concurrent.duration._
@@ -19,6 +20,7 @@ class UserActorTest extends Matchers with WordSpecLike with BeforeAndAfterEach {
 
   override def afterEach() = {
     system.shutdown()
+    //system.awaitTermination(4 seconds)
   }
 
   def createUserActor(i: Int = 1)(implicit system: ActorSystem): (TestProbe,ActorRef) = {
@@ -85,19 +87,63 @@ class UserActorTest extends Matchers with WordSpecLike with BeforeAndAfterEach {
       assert(outFirst != null && userActorFirst != null)
       assert(outSecond != null && userActorSecond != null)
 
+      def firstPlays(x: Int, y: Int) = {
+        userActorFirst ! Json.obj(
+          "command" -> UserSentMessage.PlayAtPositionCommand,
+          "position" -> Json.obj("x" -> x, "y" -> y)
+        )
+
+        outSecond.expectMsg(Json.obj(
+          "responseType" -> UserReceivedMessage.PlayerPutAMarkInPositionResponse,
+          "player" -> (if(outFirst == outX) "X" else "O"),
+          "position" -> Json.obj("x" -> x, "y" -> y)
+        ))
+
+        outFirst.expectMsg(Json.obj("responseType" -> UserReceivedMessage.WaitResponse))
+        outSecond.expectMsg(Json.obj("responseType" -> UserReceivedMessage.MakeYourMoveResponse))
+      }
+
+      def secondPlays(x: Int, y: Int) = {
+        userActorSecond ! Json.obj(
+          "command" -> UserSentMessage.PlayAtPositionCommand,
+          "position" -> Json.obj("x" -> x, "y" -> y)
+        )
+
+        outFirst.expectMsg(Json.obj(
+          "responseType" -> UserReceivedMessage.PlayerPutAMarkInPositionResponse,
+          "player" -> (if(outSecond == outX) "X" else "O"),
+          "position" -> Json.obj("x" -> x, "y" -> y)
+        ))
+
+        outSecond.expectMsg(Json.obj("responseType" -> UserReceivedMessage.WaitResponse))
+        outFirst.expectMsg(Json.obj("responseType" -> UserReceivedMessage.MakeYourMoveResponse))
+      }
+
+      firstPlays(0,0)
+      secondPlays(1,0)
+      firstPlays(1,1)
+      secondPlays(0,2)
+
       userActorFirst ! Json.obj(
         "command" -> UserSentMessage.PlayAtPositionCommand,
-        "position" -> Json.obj("x" -> 0, "y" -> 0)
+        "position" -> Json.obj("x" -> 2, "y" -> 2)
       )
 
       outSecond.expectMsg(Json.obj(
         "responseType" -> UserReceivedMessage.PlayerPutAMarkInPositionResponse,
         "player" -> (if(outFirst == outX) "X" else "O"),
-        "position" -> Json.obj("x" -> 0, "y" -> 0)
+        "position" -> Json.obj("x" -> 2, "y" -> 2)
       ))
 
-      outFirst.expectMsg(Json.obj("responseType" -> UserReceivedMessage.WaitResponse))
-      outSecond.expectMsg(Json.obj("responseType" -> UserReceivedMessage.MakeYourMoveResponse))
+      val wonMsg = Json.obj(
+        "responseType" -> UserReceivedMessage.GameWonResponse,
+        "winner" -> Json.obj(
+          "player" -> (if(outFirst == outX) "X" else "O"),
+          "winnerLine" -> Json.obj( "dimension" -> "NW_SE_Diagonal")
+        )
+      )
+      outSecond.expectMsg(wonMsg)
+      outFirst.expectMsg(wonMsg)
 
     }
 
