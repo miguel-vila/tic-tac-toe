@@ -18,7 +18,7 @@ class GameManagerActor extends Actor {
       if(waitingPlayers.size >= 1) {
         val player1 = originalSender
         val player2 = waitingPlayers.dequeue()
-        val gameActor = system.actorOf(GameActor.props(player1, player2))
+        val gameActor = system.actorOf(GameActor.props(player1, player2), "game")
         player1 ! GameStarted(gameActor, PlayerX)
         player2 ! GameStarted(gameActor, PlayerO)
       } else {
