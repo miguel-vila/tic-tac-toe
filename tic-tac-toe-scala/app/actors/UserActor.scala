@@ -11,23 +11,21 @@ import adapters.{ UserReceivedMessageAdapter => OutAdapter , UserSentMessagesAda
 class UserActor(out: ActorRef) extends Actor with WithGameManager {
   import context._
 
-  def receive = {
-    case message: JsValue =>
-      println(s"Received!: $message")
-      out ! Json.obj("echo" -> message)
-  }
+  def receive = noGameStarted
 
   def respond(msg: UserReceivedMessage): Unit = {
     out ! OutAdapter.toJson(msg)
   }
 
   def noGameStarted: Receive = {
+    case json: JsValue =>
+      self ! InAdapter.fromJSON(json)
     case StartGame =>
       gameManager ! StartGame
     case NoPlayersAvailable =>
       respond(NoPlayersAvailable)
-    case _gameStarted @ GameStarted(gameActor, thisPlayer) =>
-      respond(_gameStarted)
+    case gameStarted @ GameStarted(gameActor, thisPlayer) =>
+      respond(gameStarted)
       become(gameAboutToStart(thisPlayer, gameActor))
   }
 
@@ -37,6 +35,7 @@ class UserActor(out: ActorRef) extends Actor with WithGameManager {
       become(waiting(thisPlayer, gameActor))
     case MakeYourMove =>
       respond(MakeYourMove)
+      become(userTurn(thisPlayer, gameActor))
   }
 
   def waiting(thisPlayer: Player, gameActor: ActorRef): Receive = {
