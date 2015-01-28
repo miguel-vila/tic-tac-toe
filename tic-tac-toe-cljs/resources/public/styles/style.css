@@ -61,9 +61,9 @@ h2 {
   vertical-align: middle;
   text-align: center;
 }
-.marked-tile {
+.blocked-tile {
   position: relative;
-  background: white;
+  background: #E6E6E6;
   border: 5px solid #FC5850;
   width: 90px;
   height: 90px;
@@ -76,7 +76,7 @@ h2 {
   text-align: center;
 }
 .tile:hover {
-    background: cbcbcb;
+    background-color: #DEDEDE;
 }
 .playerX {
   color: #17F556;
