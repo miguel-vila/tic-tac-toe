@@ -2,7 +2,6 @@ package actors
 
 import akka.actor.{Props, ActorRef, Actor}
 import models.{PlayerO, PlayerX}
-import scala.collection.mutable
 
 /**
  * Created by mglvl on 24/01/15.
@@ -10,22 +9,23 @@ import scala.collection.mutable
 class GameManagerActor extends Actor {
   import context._
 
-  val waitingPlayers = new mutable.Queue[ActorRef]
+  var gameId = 1
+  var waitingPlayer: Option[ActorRef] = None
 
   def receive = {
     case StartGame =>
       val originalSender = sender()
-      if(waitingPlayers.size >= 1) {
-        val player1 = originalSender
-        val player2 = waitingPlayers.dequeue()
-        val gameActor = system.actorOf(GameActor.props(player1, player2), "game")
-        player1 ! GameStarted(gameActor, PlayerX)
-        player2 ! GameStarted(gameActor, PlayerO)
-      } else {
-        if(!waitingPlayers.contains(originalSender)) {
-          waitingPlayers enqueue originalSender
-        }
-        originalSender ! NoPlayersAvailable
+      waitingPlayer match {
+        case Some(waitingPlayer) =>
+          val player1 = originalSender
+          val player2 = waitingPlayer
+          val gameActor = system.actorOf(GameActor.props(player1, player2), s"game-$gameId")
+          player1 ! GameStarted(gameActor, PlayerX)
+          player2 ! GameStarted(gameActor, PlayerO)
+          gameId += 1
+        case None =>
+          waitingPlayer = Some(originalSender)
+          originalSender ! NoPlayersAvailable
       }
   }
 
