@@ -16,13 +16,14 @@ class GameManagerActor extends Actor {
     case StartGame =>
       val originalSender = sender()
       waitingPlayer match {
-        case Some(waitingPlayer) =>
+        case Some(_waitingPlayer) =>
           val player1 = originalSender
-          val player2 = waitingPlayer
+          val player2 = _waitingPlayer
           val gameActor = system.actorOf(GameActor.props(player1, player2), s"game-$gameId")
           player1 ! GameStarted(gameActor, PlayerX)
           player2 ! GameStarted(gameActor, PlayerO)
           gameId += 1
+          waitingPlayer = None
         case None =>
           waitingPlayer = Some(originalSender)
           originalSender ! NoPlayersAvailable
