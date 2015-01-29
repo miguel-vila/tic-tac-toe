@@ -48,6 +48,15 @@ class GameActor(playerX: ActorRef, playerO: ActorRef, rng: Rng[Player] = Game.ra
           broadcast(GameWon(winner))
           context.stop(self)
       }
+    case userDisconnected @ UserDisconnected(disconnectedActor) =>
+      val currentPlayerActor = getActor(game.currentPlayer)
+      val waitingPlayerActor = getActor(game.otherPlayer)
+      if(currentPlayerActor == disconnectedActor) {
+        waitingPlayerActor ! userDisconnected
+      }
+      if (waitingPlayerActor == disconnectedActor) {
+        currentPlayerActor ! userDisconnected
+      }
   }
 
 }

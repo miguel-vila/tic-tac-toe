@@ -28,6 +28,8 @@ class GameManagerActor extends Actor {
           waitingPlayer = Some(originalSender)
           originalSender ! NoPlayersAvailable
       }
+    case RemovePlayerIfWasWaiting(actorRef) if waitingPlayer.exists(_ == actorRef) =>
+      waitingPlayer = None
   }
 
 }

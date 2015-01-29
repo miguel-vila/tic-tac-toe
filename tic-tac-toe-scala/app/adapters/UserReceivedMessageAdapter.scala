@@ -34,6 +34,10 @@ object UserReceivedMessageAdapter {
           "player" -> player.toString,
           "position" -> PositionAdapter.toJson(position)
         )
+      case UserDisconnected(_) =>
+        Json.obj(
+          responseType -> UserReceivedMessage.UserDisconnectedResponse
+        )
     }
   }
 

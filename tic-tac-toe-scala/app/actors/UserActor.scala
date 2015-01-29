@@ -11,6 +11,9 @@ import adapters.{ UserReceivedMessageAdapter => OutAdapter , UserSentMessagesAda
 class UserActor(out: ActorRef) extends Actor with WithGameManager {
   import context._
 
+  var thisPlayer: Player = _
+  var gameActor: ActorRef = _
+
   def receive = noGameStarted
 
   def respond(msg: UserReceivedMessage): Unit = {
@@ -24,42 +27,60 @@ class UserActor(out: ActorRef) extends Actor with WithGameManager {
       gameManager ! StartGame
     case NoPlayersAvailable =>
       respond(NoPlayersAvailable)
-    case gameStarted @ GameStarted(gameActor, thisPlayer) =>
+    case gameStarted @ GameStarted(_gameActor, _thisPlayer) =>
       respond(gameStarted)
-      become(gameAboutToStart(thisPlayer, gameActor))
+      thisPlayer = _thisPlayer
+      gameActor = _gameActor
+      become(gameAboutToStart)
   }
 
-  def gameAboutToStart(thisPlayer: Player, gameActor: ActorRef): Receive = {
+  def gameAboutToStart: Receive = {
     case Wait =>
       respond(Wait)
-      become(waiting(thisPlayer, gameActor))
+      become(waiting)
     case MakeYourMove =>
       respond(MakeYourMove)
-      become(userTurn(thisPlayer, gameActor))
+      become(userTurn)
   }
 
-  def waiting(thisPlayer: Player, gameActor: ActorRef): Receive = {
+  def waiting: Receive = {
     case playerPutAMark @ PlayerPutAMarkInPosition(otherPlayer, position) =>
       respond(playerPutAMark)
     case MakeYourMove =>
       respond(MakeYourMove)
-      become(userTurn(thisPlayer, gameActor))
+      become(userTurn)
     case gameFinished: GameFinishedMessage =>
       respond(gameFinished)
+      become(noGameStarted)
+    case userDisconnected: UserDisconnected =>
+      respond(userDisconnected)
       become(noGameStarted)
   }
 
-  def userTurn(thisPlayer: Player, gameActor: ActorRef): Receive = {
+  def userTurn: Receive = {
     case json: JsValue =>
+      println(s"userActor- userTurn - JSON => $json")
       self ! InAdapter.fromJSON(json)
     case playAtPosition: PlayAtPosition =>
+      println(s"userActor- userTurn - $playAtPosition")
       gameActor ! playAtPosition
     case Wait =>
       respond(Wait)
-      become(waiting(thisPlayer, gameActor))
+      become(waiting)
     case gameFinished: GameFinishedMessage =>
       respond(gameFinished)
       become(noGameStarted)
+    case userDisconnected: UserDisconnected =>
+      respond(userDisconnected)
+      become(noGameStarted)
+  }
+
+  override def postStop(): Unit = {
+    if(gameActor != null) {
+      gameActor ! UserDisconnected(self)
+    } else {
+      gameManager ! RemovePlayerIfWasWaiting(self)
+    }
   }
 
 }

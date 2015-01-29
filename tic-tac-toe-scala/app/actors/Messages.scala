@@ -26,6 +26,9 @@ case class GameWon(winner: Winner) extends GameFinishedMessage
 case object Wait extends UserReceivedMessage
 case object MakeYourMove extends UserReceivedMessage
 case class PlayerPutAMarkInPosition(player: Player, position: Position) extends UserReceivedMessage
+case class UserDisconnected(userActor: ActorRef) extends UserReceivedMessage
+
+case class RemovePlayerIfWasWaiting(userActor: ActorRef)
 
 object UserReceivedMessage {
   val NoPlayersAvailableResponse = "NoPlayersAvailable"
@@ -35,4 +38,5 @@ object UserReceivedMessage {
   val WaitResponse = "Wait"
   val MakeYourMoveResponse = "MakeYourMove"
   val PlayerPutAMarkInPositionResponse = "PlayerPutAMarkInPosition"
+  val UserDisconnectedResponse = "UserDisconnected"
 }
