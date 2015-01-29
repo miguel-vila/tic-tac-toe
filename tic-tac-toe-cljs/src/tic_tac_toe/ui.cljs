@@ -3,7 +3,15 @@
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [cljs.core.async :refer [put! chan <! >! close! timeout]]
-            [tic-tac-toe.game :refer [create-game put-player-mark to-waiting-player-join to-player-joined to-waiting-other-player-move to-player-turn]]
+            [tic-tac-toe.game :refer [create-game
+                                      put-player-mark
+                                      wait-player-to-join
+                                      game-started
+                                      waiting-other-player-move
+                                      player-turn
+                                      other-player-put-a-mark
+                                      game-draw
+                                      game-won]]
             [tic-tac-toe.utils :refer [centered centered-text]]
             [tic-tac-toe.messages :refer [start-a-game-msg put-a-mark-msg]]))
 
@@ -125,22 +133,37 @@
     (js/console.log "Got message from server:" (pr-str message))
     (js/console.log "ResponseType:" (pr-str responseType))
     (case responseType
-      "NoPlayersAvailable" (om/transact! game to-waiting-player-join)
-      "GameStarted" (om/transact! game #(to-player-joined % (get message "youArePlayer")))
-      "Wait" (om/transact! game to-waiting-other-player-move)
-      "MakeYourMove" (om/transact! game to-player-turn)
+      "NoPlayersAvailable" (om/transact! game wait-player-to-join)
+      "GameStarted" (om/transact! game #(game-started % (get message "youArePlayer")))
+      "Wait" (om/transact! game waiting-other-player-move)
+      "MakeYourMove" (om/transact! game player-turn)
+      "PlayerPutAMarkInPosition" (om/transact! game #(other-player-put-a-mark % (get message "position")))
+      "GameWon" (om/transact! game #(game-won % (get message "winner")))
+      "Draw" (om/transact! game #(game-draw %))
       )))
+
+(defn game-won-component [game]
+  (let [winner (:winner game)
+        player-mark (:player-mark game)]
+    (if (= winner player-mark)
+      (dom/h2 nil "You Won!")
+      (dom/h2 nil "You Lose!"))))
 
 (defn game-status-view [game owner opts]
   ""
   (reify
     om/IRenderState
     (render-state [_ state]
-                  (cond
-                   (not (:game-started? game)) (dom/button #js {:className "centered" :onClick (fn [_] (.send ws start-a-game-msg))} "Join game")
-                   (:waiting-other-player-to-move game) (dom/h2 #js {:className "centered"} "Waiting for other player's move")
-                   (:waiting-player-move game) (dom/h2 nil "Make your move")
-                   (:waiting-other-player-to-join game) (dom/h2 #js {:className "centered"} "Waiting other player to join")))))
+                  (let [game-status (:game-status game)]
+                    (case game-status
+                      :not-created (dom/button #js {:className "centered" :onClick (fn [_] (.send ws start-a-game-msg))} "Join game")
+                      :waiting-other-player-to-join (dom/h2 #js {:className "centered"} "Waiting other player to join")
+                      :game-started (dom/h2 nil "Game started!")
+                      :waiting-other-player-to-move (dom/h2 #js {:className "centered"} "Waiting for other player's move")
+                      :waiting-player-to-move (dom/h2 nil "Make your move")
+                      :won (game-won-component game)
+                      :draw (dom/h2 nil "Draw!")
+                     )))))
 
 (defn game-view [game owner opts]
   "Om's view for the whole game."
@@ -151,10 +174,6 @@
                     (dom/div #js {:className "game"}
                              (dom/h1 nil "Tic Tac Toe")
                              (om/build game-status-view game view-opts)
-                             (cond
-                              (:plays game) (om/build plays-view game view-opts)
-                              (:winner game) (om/build winner-view game view-opts)
-                              (:draw? game) (om/build draws-view game view-opts))
                              (om/build board-view game view-opts))))
     om/IWillMount
       (will-mount [_]

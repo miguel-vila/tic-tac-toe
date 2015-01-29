@@ -11,13 +11,10 @@
                (repeat 3)
                (map-indexed (fn [i r] (map-indexed (fn [j m] (assoc m :x i :y j :blocked true)) r)))
                (mapv vec))
-   :game-started? false
-   :blocked true
-   :active false})
+   :game-status :not-created})
 
-(defn next-player [game]
-  "Returns the next player of a game."
-  (if (= (:plays game) "X")
+(defn other-player [player]
+  (if (= player "X")
     "O"
     "X"))
 
@@ -31,29 +28,42 @@
         tiles (:tiles game)]
     (assoc game :tiles (put-mark mark tiles x y))))
 
-(defn to-waiting-player-join [game]
-  (-> game
-       (assoc :waiting-other-player-to-join true)
-       (assoc :game-started? true)))
+(defn wait-player-to-join [game]
+  (assoc game :game-status :waiting-other-player-to-join))
 
-(defn to-player-joined [game player-mark]
+(defn game-started [game player-mark]
   (-> game
-      (assoc :game-started? true)
-      (assoc :waiting-other-player-to-join false)
-      (assoc :player-mark player-mark)
-      (assoc :waiting true)))
+      (assoc :game-status :game-started)
+      (assoc :player-mark player-mark)))
 
-(defn to-waiting-other-player-move [game]
+(defn waiting-other-player-move [game]
   (-> game
-      (assoc :waiting-other-player-to-move true)
-      (assoc :waiting-player-move false)
+      (assoc :game-status :waiting-other-player-to-move)
       (set-blocked true)))
 
-(defn to-player-turn [game]
+(defn player-turn [game]
   (-> game
-      (assoc :waiting-other-player-to-move false)
-      (assoc :waiting-player-move true)
+      (assoc :game-status :waiting-player-to-move)
       (set-blocked false)))
 
 (defn set-blocked [game blocked]
   (assoc game :tiles (mapv (fn [row] (mapv (fn [tile] (assoc tile :blocked blocked)) row)) (:tiles game))))
+
+(defn other-player-put-a-mark [game position]
+  (let [mark (other-player (:player-mark game))
+        tiles (:tiles game)
+        x (get position "x")
+        y (get position "y")]
+    (assoc game :tiles (put-mark mark tiles x y))))
+
+(defn game-won [game winner-info]
+  (let [winner (get winner-info "player")]
+    (-> game
+        (assoc :game-status :won)
+        (assoc :winner winner)
+        (set-blocked true))))
+
+(defn game-draw [game]
+  (-> game
+      (assoc game :game-status :draw)
+      (set-blocked true)))
