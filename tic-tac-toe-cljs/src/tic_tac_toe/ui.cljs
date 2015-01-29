@@ -11,7 +11,8 @@
                                       player-turn
                                       other-player-put-a-mark
                                       game-draw
-                                      game-won]]
+                                      game-won
+                                      other-player-disconnected]]
             [tic-tac-toe.utils :refer [centered centered-text]]
             [tic-tac-toe.messages :refer [start-a-game-msg put-a-mark-msg]]))
 
@@ -56,47 +57,6 @@
             (apply dom/div #js {:className "row"}
                    (mapv #(om/build tile-view % {:opts opts}) tiles)))))
 
-(defn player-title-view [player owner opts]
-  "Om's view for a player, which consists of just a div with text."
-  (reify
-    om/IRender
-    (render [_]
-            (dom/div (centered-text (player-className player)) player))))
-
-(defn plays-view [game owner opts]
-  "Om's view for the player that plays next."
-  (reify
-    om/IRender
-    (render [_]
-            (let [plays (:plays game)]
-              (dom/div #js {}
-                       (dom/h2 (centered-text) "Plays: ")
-                       (om/build player-title-view (:plays game) {:opts opts}))))))
-
-(defn draws-view [game owner opts]
-  "Om's view for draws."
-  (reify
-    om/IRender
-    (render [_]
-            (dom/h2 (centered-text) "Draw!"))))
-
-(defn winner-view [game owner opts]
-  "Om's view for the game's winner."
-  (reify
-    om/IRender
-    (render [_]
-            (let [winner (:winner game)]
-              (dom/div #js {}
-                       (dom/h2 (centered-text) "Winner: ")
-                       (om/build player-title-view (:winner game) {:opts opts}))))))
-
-(defn reset-button-view [game owner opts]
-  "Om's view for the reset game button."
-  (reify
-    om/IRender
-     (render [_]
-             (dom/button #js {:className "centered" :onClick (fn [_] (put! (:game-state opts) :reset))} "Reset Game"))))
-
 (defn board-view [game owner opts]
   "Om's view for the board."
   (reify
@@ -140,14 +100,22 @@
       "PlayerPutAMarkInPosition" (om/transact! game #(other-player-put-a-mark % (get message "position")))
       "GameWon" (om/transact! game #(game-won % (get message "winner")))
       "Draw" (om/transact! game #(game-draw %))
+      "UserDisconnected" (om/transact! game other-player-disconnected)
       )))
 
-(defn game-won-component [game]
+(defn game-won-component [game game-state-chan]
   (let [winner (:winner game)
         player-mark (:player-mark game)]
-    (if (= winner player-mark)
-      (dom/h2 nil "You Won!")
-      (dom/h2 nil "You Lose!"))))
+    (dom/div nil
+             (if (= winner player-mark)
+               (dom/h2 nil "You Won!")
+               (dom/h2 nil "You Lose!"))
+             (dom/button #js {:onClick (fn [_] (om/transact! game (fn [_] (create-game))))} "Play again"))))
+
+(defn other-player-disconnected-component [game]
+  (dom/div nil
+           (dom/h2 nil "The other player left"
+                   (dom/button #js {:onClick (fn [_] (om/transact! game (fn [_] (create-game))))} "Play again"))))
 
 (defn game-status-view [game owner opts]
   ""
@@ -161,8 +129,9 @@
                       :game-started (dom/h2 nil "Game started!")
                       :waiting-other-player-to-move (dom/h2 #js {:className "centered"} "Waiting for other player's move")
                       :waiting-player-to-move (dom/h2 nil "Make your move")
-                      :won (game-won-component game)
+                      :won (game-won-component game (:game-state opts))
                       :draw (dom/h2 nil "Draw!")
+                      :other-player-disconnected (other-player-disconnected-component game)
                      )))))
 
 (defn game-view [game owner opts]

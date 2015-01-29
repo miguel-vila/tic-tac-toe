@@ -65,5 +65,10 @@
 
 (defn game-draw [game]
   (-> game
-      (assoc game :game-status :draw)
+      (assoc :game-status :draw)
+      (set-blocked true)))
+
+(defn other-player-disconnected [game]
+  (-> game
+      (assoc :game-status :other-player-disconnected)
       (set-blocked true)))
