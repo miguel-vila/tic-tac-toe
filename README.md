@@ -1,4 +1,4 @@
-![screenshot](https://raw.githubusercontent.com/miguel-vila/tic-tac-toe/master/screenshot.png)
+![screenshot](https://raw.githubusercontent.com/miguel-vila/tic-tac-toe/master/tictactoe.gif)
 
 [![Build Status](https://travis-ci.org/miguel-vila/tic-tac-toe.svg?branch=master)](https://travis-ci.org/miguel-vila/tic-tac-toe)
 
