@@ -69,13 +69,6 @@
                              (mapv #(om/build line-view % {:opts opts})
                                    (first (partition 3 (:tiles game)))))))))))
 
-(defn game-state-channel-handling [game game-state-chan]
-  "Handles the :game-state channel"
-  (go-loop []
-           (let [_ (<! game-state-chan)]
-             (om/transact! game (fn [_] (create-game))))
-           (recur)))
-
 (defn moves-channel-handling [game moves-chan]
   "Handles the moves channel"
   (go-loop []
@@ -103,19 +96,32 @@
       "UserDisconnected" (om/transact! game other-player-disconnected)
       )))
 
-(defn game-won-component [game game-state-chan]
+(defn reset-game [game]
+  (om/transact! game (fn [_] (create-game))))
+
+(defn play-again-component [game]
+  (let [on-click (fn [_] (.send ws start-a-game-msg)
+                         (reset-game game))]
+    (dom/button #js {:className "centered-text" :onClick on-click} "Play again")))
+
+(defn game-won-component [game]
   (let [winner (:winner game)
         player-mark (:player-mark game)]
     (dom/div nil
              (if (= winner player-mark)
-               (dom/h2 nil "You Won!")
-               (dom/h2 nil "You Lose!"))
-             (dom/button #js {:onClick (fn [_] (om/transact! game (fn [_] (create-game))))} "Play again"))))
+               (dom/h2 (centered-text) "You Won!")
+               (dom/h2 (centered-text) "You Lose!"))
+             (play-again-component game))))
+
+(defn draw-component [game]
+  (dom/div nil
+           (dom/h2 (centered-text) "Draw!")
+           (play-again-component game)))
 
 (defn other-player-disconnected-component [game]
   (dom/div nil
            (dom/h2 nil "The other player left"
-                   (dom/button #js {:onClick (fn [_] (om/transact! game (fn [_] (create-game))))} "Play again"))))
+                   (dom/button #js {:className "centered-text" :onClick (fn [_] (reset-game game))} "Play again"))))
 
 (defn game-status-view [game owner opts]
   ""
@@ -125,12 +131,12 @@
                   (let [game-status (:game-status game)]
                     (case game-status
                       :not-created (dom/button #js {:className "centered" :onClick (fn [_] (.send ws start-a-game-msg))} "Join game")
-                      :waiting-other-player-to-join (dom/h2 #js {:className "centered"} "Waiting other player to join")
+                      :waiting-other-player-to-join (dom/h2 (centered-text) "Waiting other player to join")
                       :game-started (dom/h2 nil "Game started!")
-                      :waiting-other-player-to-move (dom/h2 #js {:className "centered"} "Waiting for other player's move")
-                      :waiting-player-to-move (dom/h2 nil "Make your move")
-                      :won (game-won-component game (:game-state opts))
-                      :draw (dom/h2 nil "Draw!")
+                      :waiting-other-player-to-move (dom/h2 (centered-text) "Waiting for other player's move")
+                      :waiting-player-to-move (dom/h2 (centered-text) "Make your move")
+                      :won (game-won-component game)
+                      :draw (draw-component game)
                       :other-player-disconnected (other-player-disconnected-component game)
                      )))))
 
@@ -146,7 +152,6 @@
                              (om/build board-view game view-opts))))
     om/IWillMount
       (will-mount [_]
-                  (game-state-channel-handling game (:game-state opts))
                   (moves-channel-handling game (:moves opts))
                   (set! (.-onmessage ws) (partial onmessage game)))))
 
@@ -154,5 +159,4 @@
   game-view
   app-state
   {:target (. js/document (getElementById "app"))
-   :opts {:moves (chan)
-          :game-state (chan)}})
+   :opts {:moves (chan)}})
