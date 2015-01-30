@@ -7,19 +7,19 @@ import org.scalatest.{WordSpecLike, MustMatchers}
 /**
  * Created by mglvl on 24/01/15.
  */
-class GameManagerActorTest extends TestKit(ActorSystem("GameManagerActorTest"))
+class GameCreatorActorTest extends TestKit(ActorSystem("GameManagerActorTest"))
 with MustMatchers
 with WordSpecLike
 with ImplicitSender
 {
-  "Un GameManagerActor" should {
+  "Un GameCreatorActor" should {
     "Responder que no hay juegos disponibles al primer jugador" in {
-      val gameManager = system.actorOf(GameManagerActor.props())
+      val gameManager = system.actorOf(GameCreatorActor.props())
       gameManager ! StartGame
       expectMsg(NoPlayersAvailable)
     }
     "Responder con un juego al segundo jugador que llega al sistema" in {
-      val gameManager = system.actorOf(GameManagerActor.props())
+      val gameManager = system.actorOf(GameCreatorActor.props())
       val player1 = new TestProbe(system)
       player1.send(gameManager, StartGame)
       player1.expectMsg(NoPlayersAvailable)

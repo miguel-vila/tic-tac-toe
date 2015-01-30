@@ -8,7 +8,7 @@ import adapters.{ UserReceivedMessageAdapter => OutAdapter , UserSentMessagesAda
 /**
  * Created by mglvl on 17/01/15.
  */
-class UserActor(out: ActorRef) extends Actor with WithGameManager {
+class PlayerActor(out: ActorRef) extends Actor with WithGameCreator {
   import context._
 
   var thisPlayer: Player = _
@@ -24,7 +24,7 @@ class UserActor(out: ActorRef) extends Actor with WithGameManager {
     case json: JsValue =>
       self ! InAdapter.fromJSON(json)
     case StartGame =>
-      gameManager ! StartGame
+      gameCreator ! StartGame
     case NoPlayersAvailable =>
       respond(NoPlayersAvailable)
     case gameStarted @ GameStarted(_gameActor, _thisPlayer) =>
@@ -79,12 +79,12 @@ class UserActor(out: ActorRef) extends Actor with WithGameManager {
     if(gameActor != null) {
       gameActor ! UserDisconnected(self)
     } else {
-      gameManager ! RemovePlayerIfWasWaiting(self)
+      gameCreator ! RemovePlayerIfWasWaiting(self)
     }
   }
 
 }
 
-object UserActor {
-  def props(out: ActorRef): Props = Props(new UserActor(out))
+object PlayerActor {
+  def props(out: ActorRef): Props = Props(new PlayerActor(out))
 }

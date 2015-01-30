@@ -10,12 +10,12 @@ import scala.concurrent.duration._
 /**
  * Created by mglvl on 25/01/15.
  */
-class UserActorTest extends Matchers with WordSpecLike with BeforeAndAfterEach {
+class PlayerActorTest extends Matchers with WordSpecLike with BeforeAndAfterEach {
 
   implicit var system: ActorSystem = _
 
   override def beforeEach() = {
-    system = ActorSystem("UserActorTest")
+    system = ActorSystem("PlayerActorTest")
   }
 
   override def afterEach() = {
@@ -25,11 +25,11 @@ class UserActorTest extends Matchers with WordSpecLike with BeforeAndAfterEach {
 
   def createUserActor(i: Int = 1)(implicit system: ActorSystem): (TestProbe,ActorRef) = {
     val out = TestProbe()
-    val userActor = system.actorOf(UserActor.props(out.ref), s"user-actor-$i")
+    val userActor = system.actorOf(PlayerActor.props(out.ref), s"user-actor-$i")
     (out, userActor)
   }
 
-  "Un UserActor" should {
+  "Un PlayerActor" should {
 
     "Responde informando la falta de otros jugadores" in {
       val (out1, userActor1) = createUserActor()

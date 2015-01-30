@@ -1,6 +1,6 @@
 package controllers
 
-import actors.UserActor
+import actors.PlayerActor
 import play.api._
 import play.api.libs.json.JsValue
 import play.api.mvc._
@@ -13,7 +13,7 @@ object Application extends Controller {
   }
 
   def wsUser = WebSocket.acceptWithActor[JsValue,JsValue] { implicit req => out =>
-    UserActor.props(out)
+    PlayerActor.props(out)
   }
 
 }

@@ -6,7 +6,7 @@ import models.{PlayerO, PlayerX}
 /**
  * Created by mglvl on 24/01/15.
  */
-class GameManagerActor extends Actor {
+class GameCreatorActor extends Actor {
   import context._
 
   var gameId = 1
@@ -34,6 +34,6 @@ class GameManagerActor extends Actor {
 
 }
 
-object GameManagerActor{
-  def props(): Props = Props(new GameManagerActor)
+object GameCreatorActor{
+  def props(): Props = Props(new GameCreatorActor)
 }
