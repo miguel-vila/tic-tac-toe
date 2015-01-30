@@ -120,25 +120,26 @@
 
 (defn other-player-disconnected-component [game]
   (dom/div nil
-           (dom/h2 nil "The other player left"
-                   (dom/button #js {:className "centered-text" :onClick (fn [_] (reset-game game))} "Play again"))))
+           (dom/h2 (centered-text) "The other player left")
+           (dom/button #js {:className "centered-text" :onClick (fn [_] (reset-game game))} "Play again")))
 
 (defn game-status-view [game owner opts]
   ""
   (reify
     om/IRenderState
     (render-state [_ state]
-                  (let [game-status (:game-status game)]
-                    (case game-status
-                      :not-created (dom/button #js {:className "centered" :onClick (fn [_] (.send ws start-a-game-msg))} "Join game")
-                      :waiting-other-player-to-join (dom/h2 (centered-text) "Waiting other player to join")
-                      :game-started (dom/h2 nil "Game started!")
-                      :waiting-other-player-to-move (dom/h2 (centered-text) "Waiting for other player's move")
-                      :waiting-player-to-move (dom/h2 (centered-text) "Make your move")
-                      :won (game-won-component game)
-                      :draw (draw-component game)
-                      :other-player-disconnected (other-player-disconnected-component game)
-                     )))))
+                  (dom/div #js {:className "game-status"}
+                       (let [game-status (:game-status game)]
+                         (case game-status
+                           :not-created (dom/button #js {:className "centered" :onClick (fn [_] (.send ws start-a-game-msg))} "Join game")
+                           :waiting-other-player-to-join (dom/h2 (centered-text) "Waiting other player to join")
+                           :game-started (dom/h2 nil "Game started!")
+                           :waiting-other-player-to-move (dom/h2 (centered-text) "Waiting for other player's move")
+                           :waiting-player-to-move (dom/h2 (centered-text) "Make your move")
+                           :won (game-won-component game)
+                           :draw (draw-component game)
+                           :other-player-disconnected (other-player-disconnected-component game)
+                           ))))))
 
 (defn game-view [game owner opts]
   "Om's view for the whole game."

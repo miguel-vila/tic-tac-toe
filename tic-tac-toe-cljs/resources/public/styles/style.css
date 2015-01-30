@@ -93,3 +93,7 @@ h2 {
 .row {
   position: relative;
 }
+.game-status {
+  height: 50px;
+  display: block;
+}
