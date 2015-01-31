@@ -15,3 +15,7 @@ libraryDependencies ++= Seq(
   "org.scalatest"       %%  "scalatest"                     % "2.2.1"   % "test",
   "com.typesafe.akka"   %%  "akka-testkit"                  % akkaV     % "test"
 )
+
+herokuAppName in Compile := "tic-tac-toe-scala-cljs"
+
+herokuJdkVersion in Compile := "1.8"
