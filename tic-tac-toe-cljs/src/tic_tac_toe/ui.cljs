@@ -3,17 +3,7 @@
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [cljs.core.async :refer [put! chan <! >! close! timeout]]
-            [tic-tac-toe.game :refer [create-game
-                                      ready-to-join
-                                      put-player-mark
-                                      wait-player-to-join
-                                      game-started
-                                      waiting-other-player-move
-                                      player-turn
-                                      other-player-put-a-mark
-                                      game-draw
-                                      game-won
-                                      other-player-disconnected]]
+            [tic-tac-toe.game :as gm]
             [tic-tac-toe.utils :refer [centered centered-text]]
             [tic-tac-toe.messages :refer [start-a-game-msg put-a-mark-msg]]))
 
@@ -23,7 +13,7 @@
 
 (def app-state
   "The app state which is a game map."
-  (atom (create-game)))
+  (atom (gm/create-game)))
 
 (defn player-className [mark]
   "Returns a string with the name of the player's class name."
@@ -78,7 +68,7 @@
                  message (put-a-mark-msg x y)]
              (js/console.log (str " move -> " message))
              (.send ws message)
-             (om/transact! game #(put-player-mark % x y)))
+             (om/transact! game #(gm/put-player-mark % x y)))
            (recur)))
 
 (defn onmessage [game msg]
@@ -87,21 +77,21 @@
     (js/console.log "Got message from server:" (pr-str message))
     (js/console.log "ResponseType:" (pr-str responseType))
     (case responseType
-      "NoPlayersAvailable" (om/transact! game wait-player-to-join)
-      "GameStarted" (om/transact! game #(game-started % (get message "youArePlayer")))
-      "Wait" (om/transact! game waiting-other-player-move)
-      "MakeYourMove" (om/transact! game player-turn)
-      "PlayerPutAMarkInPosition" (om/transact! game #(other-player-put-a-mark % (get message "position")))
-      "GameWon" (om/transact! game #(game-won % (get message "winner")))
-      "Draw" (om/transact! game #(game-draw %))
-      "UserDisconnected" (om/transact! game other-player-disconnected)
+      "NoPlayersAvailable" (om/transact! game gm/wait-player-to-join)
+      "GameStarted" (om/transact! game #(gm/game-started % (get message "youArePlayer")))
+      "Wait" (om/transact! game gm/waiting-other-player-move)
+      "MakeYourMove" (om/transact! game gm/player-turn)
+      "PlayerPutAMarkInPosition" (om/transact! game #(gm/other-player-put-a-mark % (get message "position")))
+      "GameWon" (om/transact! game #(gm/game-won % (get message "winner")))
+      "Draw" (om/transact! game #(gm/game-draw %))
+      "UserDisconnected" (om/transact! game gm/other-player-disconnected)
       )))
 
 (defn onopen [game]
-  (om/transact! game ready-to-join))
+  (om/transact! game gm/ready-to-join))
 
 (defn reset-game [game]
-  (om/transact! game (fn [_] (create-game))))
+  (om/transact! game (fn [_] (gm/create-game))))
 
 (defn play-again-component [game]
   (let [on-click (fn [_] (.send ws start-a-game-msg)
