@@ -4,6 +4,7 @@
             [om.dom :as dom :include-macros true]
             [cljs.core.async :refer [put! chan <! >! close! timeout]]
             [tic-tac-toe.game :refer [create-game
+                                      ready-to-join
                                       put-player-mark
                                       wait-player-to-join
                                       game-started
@@ -18,7 +19,7 @@
 
 (enable-console-print!)
 
-(def ws (js/WebSocket. "ws://localhost:9000/websockets/user"))
+(def ws (js/WebSocket. "ws://tic-tac-toe-scala-cljs.herokuapp.com/websockets/user"))
 
 (def app-state
   "The app state which is a game map."
@@ -96,6 +97,9 @@
       "UserDisconnected" (om/transact! game other-player-disconnected)
       )))
 
+(defn onopen [game]
+  (om/transact! game ready-to-join))
+
 (defn reset-game [game]
   (om/transact! game (fn [_] (create-game))))
 
@@ -123,6 +127,14 @@
            (dom/h2 (centered-text) "The other player left")
            (dom/button #js {:className "centered-text" :onClick (fn [_] (reset-game game))} "Play again")))
 
+(defn not-created-component [game]
+  (let [connecting (not (:ready-to-join game))]
+    (dom/div nil
+             (dom/button #js {:className "centered" :disabled connecting :onClick (fn [_] (.send ws start-a-game-msg))} "Join game")
+             (when connecting
+               (dom/h2 (centered-text) "Connecting..."))
+             )))
+
 (defn game-status-view [game owner opts]
   ""
   (reify
@@ -131,9 +143,9 @@
                   (dom/div #js {:className "game-status"}
                        (let [game-status (:game-status game)]
                          (case game-status
-                           :not-created (dom/button #js {:className "centered" :onClick (fn [_] (.send ws start-a-game-msg))} "Join game")
+                           :not-created (not-created-component game)
                            :waiting-other-player-to-join (dom/h2 (centered-text) "Waiting other player to join")
-                           :game-started (dom/h2 nil "Game started!")
+                           :game-started (dom/h2 (centered-text) "Game started!")
                            :waiting-other-player-to-move (dom/h2 (centered-text) "Waiting for other player's move")
                            :waiting-player-to-move (dom/h2 (centered-text) "Make your move")
                            :won (game-won-component game)
@@ -154,7 +166,8 @@
     om/IWillMount
       (will-mount [_]
                   (moves-channel-handling game (:moves opts))
-                  (set! (.-onmessage ws) (partial onmessage game)))))
+                  (set! (.-onmessage ws) (partial onmessage game))
+                  (set! (.-onopen ws) (partial onopen game)))))
 
 (om/root
   game-view

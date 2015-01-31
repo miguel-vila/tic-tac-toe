@@ -22,6 +22,9 @@
   "Puts the mark in the position (x,y)."
   (assoc-in tiles [x y :mark] mark))
 
+(defn ready-to-join [game]
+  (assoc game :ready-to-join true))
+
 (defn put-player-mark [game x y]
   "Puts a player mark in the game tiles"
   (let [mark (:player-mark game)
