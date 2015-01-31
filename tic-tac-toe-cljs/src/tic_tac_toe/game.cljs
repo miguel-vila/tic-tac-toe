@@ -29,7 +29,9 @@
   "Puts a player mark in the game tiles"
   (let [mark (:player-mark game)
         tiles (:tiles game)]
-    (assoc game :tiles (put-mark mark tiles x y))))
+    (-> game
+        (assoc :tiles (put-mark mark tiles x y))
+        (set-blocked true))))
 
 (defn wait-player-to-join [game]
   (assoc game :game-status :waiting-other-player-to-join))
