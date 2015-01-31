@@ -39,6 +39,9 @@
       (assoc :game-status :game-started)
       (assoc :player-mark player-mark)))
 
+(defn set-blocked [game blocked]
+  (assoc game :tiles (mapv (fn [row] (mapv (fn [tile] (assoc tile :blocked blocked)) row)) (:tiles game))))
+
 (defn waiting-other-player-move [game]
   (-> game
       (assoc :game-status :waiting-other-player-to-move)
@@ -48,9 +51,6 @@
   (-> game
       (assoc :game-status :waiting-player-to-move)
       (set-blocked false)))
-
-(defn set-blocked [game blocked]
-  (assoc game :tiles (mapv (fn [row] (mapv (fn [tile] (assoc tile :blocked blocked)) row)) (:tiles game))))
 
 (defn other-player-put-a-mark [game position]
   (let [mark (other-player (:player-mark game))

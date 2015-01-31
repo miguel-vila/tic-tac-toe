@@ -6,7 +6,8 @@
             [tic-tac-toe.game :as gm]
             [tic-tac-toe.utils :refer [centered centered-text]]
             [tic-tac-toe.messages :refer [start-a-game-msg put-a-mark-msg]]
-            [tic-tac-toe.websocket :as ws]))
+            [tic-tac-toe.websocket :as ws]
+            [tic-tac-toe.elements :as el]))
 
 (enable-console-print!)
 
@@ -89,41 +90,6 @@
 (defn onopen [game]
   (om/transact! game gm/ready-to-join))
 
-(defn reset-game [game]
-  (om/transact! game (fn [_] (gm/create-game))))
-
-(defn play-again-component [game]
-  (let [on-click (fn [_] (ws/send start-a-game-msg)
-                         (reset-game game))]
-    (dom/button #js {:className "centered-text" :onClick on-click} "Play again")))
-
-(defn game-won-component [game]
-  (let [winner (:winner game)
-        player-mark (:player-mark game)]
-    (dom/div nil
-             (if (= winner player-mark)
-               (dom/h2 (centered-text) "You Won!")
-               (dom/h2 (centered-text) "You Lose!"))
-             (play-again-component game))))
-
-(defn draw-component [game]
-  (dom/div nil
-           (dom/h2 (centered-text) "Draw!")
-           (play-again-component game)))
-
-(defn other-player-disconnected-component [game]
-  (dom/div nil
-           (dom/h2 (centered-text) "The other player left")
-           (dom/button #js {:className "centered-text" :onClick (fn [_] (reset-game game))} "Play again")))
-
-(defn not-created-component [game]
-  (let [connecting (not (:ready-to-join game))]
-    (dom/div nil
-             (dom/button #js {:className "centered" :disabled connecting :onClick (fn [_] (ws/send start-a-game-msg))} "Join game")
-             (when connecting
-               (dom/h2 (centered-text) "Connecting..."))
-             )))
-
 (defn game-status-view [game owner opts]
   ""
   (reify
@@ -132,14 +98,14 @@
                   (dom/div #js {:className "game-status"}
                        (let [game-status (:game-status game)]
                          (case game-status
-                           :not-created (not-created-component game)
+                           :not-created (el/not-created-element game)
                            :waiting-other-player-to-join (dom/h2 (centered-text) "Waiting other player to join")
                            :game-started (dom/h2 (centered-text) "Game started!")
                            :waiting-other-player-to-move (dom/h2 (centered-text) "Waiting for other player's move")
                            :waiting-player-to-move (dom/h2 (centered-text) "Make your move")
-                           :won (game-won-component game)
-                           :draw (draw-component game)
-                           :other-player-disconnected (other-player-disconnected-component game)
+                           :won (el/game-won-element game)
+                           :draw (el/draw-element game)
+                           :other-player-disconnected (el/other-player-disconnected-element game)
                            ))))))
 
 (defn game-view [game owner opts]
