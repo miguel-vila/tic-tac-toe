@@ -5,11 +5,10 @@
             [cljs.core.async :refer [put! chan <! >! close! timeout]]
             [tic-tac-toe.game :as gm]
             [tic-tac-toe.utils :refer [centered centered-text]]
-            [tic-tac-toe.messages :refer [start-a-game-msg put-a-mark-msg]]))
+            [tic-tac-toe.messages :refer [start-a-game-msg put-a-mark-msg]]
+            [tic-tac-toe.websocket :as ws]))
 
 (enable-console-print!)
-
-(def ws (js/WebSocket. "ws://tic-tac-toe-scala-cljs.herokuapp.com/websockets/user"))
 
 (def app-state
   "The app state which is a game map."
@@ -67,7 +66,7 @@
                  mark (:player-mark @game)
                  message (put-a-mark-msg x y)]
              (js/console.log (str " move -> " message))
-             (.send ws message)
+             (ws/send message)
              (om/transact! game #(gm/put-player-mark % x y)))
            (recur)))
 
@@ -94,7 +93,7 @@
   (om/transact! game (fn [_] (gm/create-game))))
 
 (defn play-again-component [game]
-  (let [on-click (fn [_] (.send ws start-a-game-msg)
+  (let [on-click (fn [_] (ws/send start-a-game-msg)
                          (reset-game game))]
     (dom/button #js {:className "centered-text" :onClick on-click} "Play again")))
 
@@ -120,7 +119,7 @@
 (defn not-created-component [game]
   (let [connecting (not (:ready-to-join game))]
     (dom/div nil
-             (dom/button #js {:className "centered" :disabled connecting :onClick (fn [_] (.send ws start-a-game-msg))} "Join game")
+             (dom/button #js {:className "centered" :disabled connecting :onClick (fn [_] (ws/send start-a-game-msg))} "Join game")
              (when connecting
                (dom/h2 (centered-text) "Connecting..."))
              )))
@@ -156,8 +155,8 @@
     om/IWillMount
       (will-mount [_]
                   (moves-channel-handling game (:moves opts))
-                  (set! (.-onmessage ws) (partial onmessage game))
-                  (set! (.-onopen ws) (partial onopen game)))))
+                  (ws/set-on-message! (partial onmessage game))
+                  (ws/set-on-open! (partial onopen game)))))
 
 (om/root
   game-view
