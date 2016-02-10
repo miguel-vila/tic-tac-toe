@@ -7,11 +7,11 @@ import TileComponent from './components/Tile';
 import {div, table, tbody, tr, td} from '@cycle/dom';
 
 run(BoardComponent, {
-	DOM: makeDOMDriver('#root'),
-	props: () => {
-		return {
-			playerMark: "X",
-			otherPlayerMark: "O"
-		}
-	}
+    DOM: makeDOMDriver('#root'),
+    props: () => {
+        return {
+            playerMark: "X",
+            otherPlayerMark: "O"
+        }
+    }
 });
