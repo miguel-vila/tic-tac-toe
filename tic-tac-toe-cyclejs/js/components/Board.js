@@ -31,15 +31,24 @@ function boardComponent( sources ) {
         });
     }
 
-    const rowsDom$ = Observable.combineLatest(...[0,1,2].map( x => {
-        const tilesDom$ = Observable.combineLatest(...[0,1,2].map( y => createTile(x,y).DOM ));
+    const tilesComponentsMatrix = [0,1,2].map( x => 
+        [0,1,2].map( y => createTile(x,y) )
+    );
+
+    const rowsDom$ = Observable.combineLatest(...tilesComponentsMatrix.map( tilesComponentsRow => {
+        const tilesDom$ = Observable.combineLatest(...tilesComponentsRow.map( component => component.DOM ));
         return rowView( tilesDom$ );
     }));
+
+    const click$ = Observable.merge(...tilesComponentsMatrix.map( tilesComponentsRow => 
+        Observable.merge(...tilesComponentsRow.map( component => component.event$ ))
+    ));
 
     const dom$ = boardView( rowsDom$ );
     
     return {
-        DOM: dom$
+        DOM: dom$,
+        click$
     };
 }
 

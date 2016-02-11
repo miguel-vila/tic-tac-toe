@@ -20,11 +20,12 @@ function tileView (tile) {
     return div({ className: tileClassName( tile ) },[tile.mark]);   
 }
 
-function events (DOMSource) {
+function clicks (DOMSource) {
     return DOMSource.select('.tile')
             .events('click')
-            .map( _ => {
-                return { type: 'click'}
+            .filter( e => e.target.className && e.target.className.indexOf("blocked-tile") === -1 )
+            .map( e => {
+                return { type: 'click' }
             } );
 }
 
@@ -67,12 +68,18 @@ function tileComponent (sources) {
         return event$.startWith({/*Evento vacío. Se puede hacer mejor?*/}).scan(update, initialModel);
     }
 
-    const event$ = events( sources.DOM /*, @TODO other events*/ );
+    const click$ = clicks( sources.DOM );
+
+    const event$ = click$; /* @TODO other events*/
+
     const model$ = model(event$);
     const view$ = model$.map(tileView);
 
     return {
         DOM: view$,
+        event$: click$.map( _ => {
+            return { type: 'markedByPlayer', x , y } 
+        })
     }
 }
 

@@ -1,5 +1,8 @@
 import {Observable} from 'rx';
 import {div, h1, h2, button} from '@cycle/dom';
+import BoardComponent from './Board';
+import { startGameMessage , putMarkMessage } from '/.Messages';
+import { Map } from 'immutable';
 
 function centeredH2(text) {
     return h2( { className : "centered-text" }, text );
@@ -10,8 +13,7 @@ function notCreated (game) {
     const joinGameButton = button( { className : "join-game centered", disabled: connecting }, ["Join Game"] );
     const elems = [joinGameButton];
     if(connecting) {
-        const connectingElem = centeredH2( "Connecting..." );
-        elems.push( connectingElem );
+        elems.push( centeredH2( "Connecting..." ) );
     }
     return div( null, elems );
 }
@@ -37,28 +39,57 @@ function gameStatusView (game) {
     var content = [];
     switch(game.status) {
         case "notCreated":
-     content.push( notCreated( game ) );
-     case "waitingForOtherPlayerToJoin":
-     content.push( waitingForOtherPlayerToJoin );
-     case "gameStarted":
-     content.push( gameStarted );
-     case "waitingForOtherPlayerToMove":
-     content.push( waitingForOtherPlayerToMove );
-     case "gameWon":
-     content.push( gameWon( game ) );
-     case "draw":
-     content.push( draw );
-     case "otherPlayerDisconnected":
-     content.push( otherPlayerDisconnected );
- }
- return div( { className : "game-status" }, content);
+            content.push( notCreated( game ) );
+        case "waitingForOtherPlayerToJoin":
+            content.push( waitingForOtherPlayerToJoin );
+        case "gameStarted":
+            content.push( gameStarted );
+        case "waitingForOtherPlayerToMove":
+            content.push( waitingForOtherPlayerToMove );
+        case "gameWon":
+            content.push( gameWon( game ) );
+        case "draw":
+            content.push( draw );
+        case "otherPlayerDisconnected":
+            content.push( otherPlayerDisconnected );
+    }
+    return div( { className : "game-status" }, content);
 }
 
-function gameView (game) {
-    return div( { className: 'game' }, [
-        h1({}, "Tic Tac Toe"),
-     [
-     gameStatusView( game ),
-     ]
-     ])
+function gameView (game, boardDOM$) {
+    return boardDOM$.map( boardDOM => 
+        div( { className: 'game' }, [
+            h1({}, "Tic Tac Toe"),
+            gameStatusView( game ),
+            boardDOM
+        ])
+    );
+}
+function messages (DOMSource, boardClick$) {
+    const joinGameMessages = DOMSource.select('.join-game')
+                            .events('click')
+                            .map( _ => startGameMessage );
+
+    const movementsMessages = boardClick$
+                            .map( putMarkMessage );
+
+    return joinGameMessages.merge(movementsMessages);
+}
+
+function setStatus (game, status) {
+    return Map(game).set('status',status).toObject();
+}
+
+function update(game, event) {
+    switch(event.type) {
+        case "NoPlayersAvailable":
+
+    }
+}
+
+function gameComponent (sources) {
+    const {boardDOM, boardClick$} = BoardComponent(sources);
+    const initialGame = { status : "notCreated" };
+    const message$ = messages( sources.DOM, boardClick$ ); 
+
 }
