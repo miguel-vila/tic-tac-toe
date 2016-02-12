@@ -5,7 +5,7 @@ import { startGameMessage , putMarkMessage } from '/.Messages';
 import { Map } from 'immutable';
 
 function centeredH2(text) {
-    return h2( { className : "centered-text" }, text );
+    return h2( { className : "centered-text" }, [text] );
 }
 
 function notCreated (game) {
@@ -22,13 +22,13 @@ const waitingForOtherPlayerToJoin = centeredH2( "Waiting other player to join" )
 const gameStarted = centeredH2( "Game started!" );
 const waitingForOtherPlayerToMove = centeredH2( "Waiting for other player's move" );
 const waitingPlayerMove = centeredH2( "Make your move" );
-const playAgain = button( { className : "centered-text" }, ["Play again"]);
+const playAgain = button( { className : "play-again centered-text" }, ["Play again"]);
 
 function gameWon (game) {
   return div(null,
      [  
-     game.winner === game.playerMark ? centeredH2( "You Won!" ) : centeredH2( "You Lose!" ),
-     playAgain
+         game.winner === game.playerMark ? centeredH2( "You Won!" ) : centeredH2( "You Lose!" ),
+         playAgain
      ]);
 }
 
@@ -46,7 +46,9 @@ function gameStatusView (game) {
             content.push( gameStarted );
         case "waitingForOtherPlayerToMove":
             content.push( waitingForOtherPlayerToMove );
-        case "gameWon":
+        case "waitingPlayerMove":
+            content.push( waitingPlayerMove );
+        case "GameWon":
             content.push( gameWon( game ) );
         case "draw":
             content.push( draw );
@@ -65,31 +67,96 @@ function gameView (game, boardDOM$) {
         ])
     );
 }
+
 function messages (DOMSource, boardClick$) {
-    const joinGameMessages = DOMSource.select('.join-game')
-                            .events('click')
-                            .map( _ => startGameMessage );
+    const joinGameMessage$ = DOMSource.select('.join-game')
+                                      .events('click')
+                                      .map( _ => startGameMessage );
 
-    const movementsMessages = boardClick$
-                            .map( putMarkMessage );
+    const playAgainMessage$ = DOMSource.select('.play-again')
+                                       .events('click')
+                                       .map( _ => startGameMessage );
 
-    return joinGameMessages.merge(movementsMessages);
+    const userMove$ = boardClick$.map( click => putMarkMessage( click.position ) );
+
+    return Observable.merge(
+        joinGameMessage$,
+        playAgainMessage$,
+        userMove$
+    );
 }
 
 function setStatus (game, status) {
     return Map(game).set('status',status).toObject();
 }
 
+function setGameStarted(game, playerMark) {
+    return Map(game).set('status', 'gameStarted')
+                    .set('playerMark', playerMark)
+                    .set('otherPlayerMark', otherPlayerMark)
+                    .toObject();
+}
+
+function otherPlayer(playerMark) {
+    return playerMark === 'X' ? 'O' : 'X';
+}
+
+function setStatusAndBlock (game, status) {
+    return Map(game).set('status', status).set('blocked', true).toObject();
+}
+
+function setStatusAndUnblock (game, status) {
+    return Map(game).set('status', status).set('blocked', false).toObject();
+}
+
 function update(game, event) {
     switch(event.type) {
         case "NoPlayersAvailable":
-
+            return setStatus(game, 'waitingForOtherPlayerToJoin');
+        case "GameStarted":
+            return setStatusAndUnblock(game, event.youArePlayer);
+        case "MakeYourMove":
+            return setStatus(game, 'waitingPlayerMove');
+        case "Wait":
+            return setStatusAndBlock(game, 'waitingForOtherPlayerToMove');
+            /*
+        case "PlayerPutAMarkInPosition":
+            return
+            */
+        case "GameWon":
+            return setStatusAndBlock(game, 'GameWon');
+        case "Draw":
+            return setStatusAndBlock(game, 'Draw');
     }
+    return game;
 }
 
-function gameComponent (sources) {
-    const {boardDOM, boardClick$} = BoardComponent(sources);
-    const initialGame = { status : "notCreated" };
+function gameComponent ({DOM, WS}) {
+    const otherPlayerMove$ = WS.filter( msg => msg.responseType === "PlayerPutAMarkInPosition" )
+                               .map( msg => msg.position );
+
+    const wsEvent$ = WS.filter( msg => msg.responseType !== "PlayerPutAMarkInPosition" )
+                       .map( msg => {
+                            msg.type = msg.responseType; // this could be avoided by renaming this field in the server
+                            return msg;
+                       });
+
+    const initialGame = { status : "notCreated", blocked: true };
+
+    const game$ = wsEvent$.startWith({/*Mensaje vacío. ¿Se puede hacer mejor?*/})
+                          .scan(update, initialGame);
+
+    const blocked$ = game$.map( game => game.blocked ).distinctUntilChanged();
+    
+    const {boardDOM, boardClick$} = BoardComponent({
+        DOM,
+        otherPlayerMove$,
+        blocked$
+    });
+    
     const message$ = messages( sources.DOM, boardClick$ ); 
 
+    return {
+        WS: message$
+    }
 }

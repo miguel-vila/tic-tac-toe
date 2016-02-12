@@ -17,17 +17,20 @@ function boardView( rowsDom$ ) {
     );
 }
 
-function boardComponent( sources ) {
-    const {playerMark,otherPlayerMark} = sources.props;
+function boardComponent({ props, DOM, otherPlayerMove$, blocked$ }) {
+    const {playerMark,otherPlayerMark} = props;
 
     function Tile(x,y) {
         return isolate(tileComponent, `${x}${y}`);
     }
 
     function createTile(x,y) {
+        const otherPlayerClick$ = otherPlayerMove$.filter( otherPlayerMove => otherPlayerMove.x === x && otherPlayerMove.y === y );
         return Tile(x,y)({
-            DOM: sources.DOM,
-            props: {x,y,playerMark,otherPlayerMark}
+            DOM,
+            otherPlayerClick$,
+            blocked$,
+            props: { x , y , playerMark , otherPlayerMark }
         });
     }
 
@@ -40,7 +43,7 @@ function boardComponent( sources ) {
         return rowView( tilesDom$ );
     }));
 
-    const click$ = Observable.merge(...tilesComponentsMatrix.map( tilesComponentsRow => 
+    const boardClick$ = Observable.merge(...tilesComponentsMatrix.map( tilesComponentsRow => 
         Observable.merge(...tilesComponentsRow.map( component => component.event$ ))
     ));
 
@@ -48,7 +51,7 @@ function boardComponent( sources ) {
     
     return {
         DOM: dom$,
-        click$
+        boardClick$
     };
 }
 

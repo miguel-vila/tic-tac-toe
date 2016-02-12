@@ -24,9 +24,33 @@ function clicks (DOMSource) {
     return DOMSource.select('.tile')
             .events('click')
             .filter( e => e.target.className && e.target.className.indexOf("blocked-tile") === -1 )
-            .map( e => {
-                return { type: 'click' }
+            .map( _ => {
+                return { type: 'click' };
             } );
+}
+
+function otherPlayerClicks (otherPlayerClick$) {
+    return otherPlayerClick$.map( _ => {
+        return { type : 'otherPlayerClick' };
+    } );
+}
+
+function blockUnblockEvents (blocked$) {
+    return blocked$.map( blocked => {
+            if(blocked) {
+                return { type : 'block' };
+            } else {
+                return { type : 'unblock' };
+            }
+        });
+}
+
+function events ({ DOM, otherPlayerClick$ , blocked$ }) {
+    return Observable.merge(...[
+        DOM.map( clicks ),
+        otherPlayerClicks( otherPlayerClick$ ),
+        blockUnblockEvents( blocked$ )
+    ]);
 }
 
 function putMark (model, mark) {
@@ -44,7 +68,7 @@ function _update (model, event, playerMark, otherPlayerMark) {
         switch(event.type) {
             case 'click':
                 return putMark( model, playerMark );
-            case 'other-player-movement':
+            case 'otherPlayerClick':
                 return putMark( model, otherPlayerMark );
             case 'block':
                 return setBlocked(model, true);
@@ -64,21 +88,17 @@ function tileComponent (sources) {
         return _update(model, event, playerMark, otherPlayerMark);
     }
 
-    function model (event$) {
-        return event$.startWith({/*Evento vacío. Se puede hacer mejor?*/}).scan(update, initialModel);
-    }
+    const event$ = events( sources );
 
-    const click$ = clicks( sources.DOM );
+    const model$ = event$.startWith({/*Evento vacío. Se puede hacer mejor?*/})
+                         .scan(update, initialModel);
 
-    const event$ = click$; /* @TODO other events*/
-
-    const model$ = model(event$);
     const view$ = model$.map(tileView);
 
     return {
         DOM: view$,
         event$: click$.map( _ => {
-            return { type: 'markedByPlayer', x , y } 
+            return { type: 'markedByPlayer', position : { x , y } } 
         })
     }
 }
