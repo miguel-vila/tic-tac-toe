@@ -45,12 +45,12 @@ function blockUnblockEvents (blocked$) {
         });
 }
 
-function events ({ DOM, otherPlayerClick$ , blocked$ }) {
-    return Observable.merge(...[
-        DOM.map( clicks ),
+function events (otherPlayerClick$ , blocked$, click$) {
+    return Observable.merge(
+        click$,
         otherPlayerClicks( otherPlayerClick$ ),
         blockUnblockEvents( blocked$ )
-    ]);
+    );
 }
 
 function putMark (model, mark) {
@@ -62,9 +62,9 @@ function setBlocked(model, blocked) {
 }
 
 function _update (model, event, playerMark, otherPlayerMark) {
-    if(model.blocked) {
+    if(model.blocked && event.type !== 'unblock') {
         return model;
-    } else {    
+    } else {
         switch(event.type) {
             case 'click':
                 return putMark( model, playerMark );
@@ -88,7 +88,8 @@ function tileComponent (sources) {
         return _update(model, event, playerMark, otherPlayerMark);
     }
 
-    const event$ = events( sources );
+    const click$ = clicks( sources.DOM );
+    const event$ = events( sources.otherPlayerClick$, sources.blocked$, click$ );
 
     const model$ = event$.startWith({/*Evento vacío. Se puede hacer mejor?*/})
                          .scan(update, initialModel);

@@ -1,9 +1,13 @@
 const startGameCommand = "StartGame";
 const putMarkCommand = "PlayAtPosition";
 
-export default {
+const Messages = {
     startGameCommand,
     putMarkCommand,
     startGameMessage: { command : startGameCommand },
-    putMarkMessage: (position) => { command : putMarkCommand, position }
+    putMarkMessage: (position) =>  {
+        return { command : putMarkCommand, position };
+    }
 };
+
+export default Messages;

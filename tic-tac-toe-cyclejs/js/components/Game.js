@@ -1,8 +1,12 @@
 import {Observable} from 'rx';
 import {div, h1, h2, button} from '@cycle/dom';
 import BoardComponent from './Board';
-import { startGameMessage , putMarkMessage } from '/.Messages';
+import Messages from './Messages';
 import { Map } from 'immutable';
+
+const { startGameMessage , putMarkMessage } = Messages;
+
+const initialGame = { status : "notCreated", blocked: true };
 
 function centeredH2(text) {
     return h2( { className : "centered-text" }, [text] );
@@ -36,35 +40,39 @@ const draw = div(null, [ centeredH2("Draw!") , playAgain ] );
 const otherPlayerDisconnected = div(null, [ centeredH2( "The other player left" ), playAgain ] );
 
 function gameStatusView (game) {
-    var content = [];
+    const   content = [];
+    const withContent = content => div( { className : "game-status" }, content) ;
     switch(game.status) {
         case "notCreated":
-            content.push( notCreated( game ) );
+            return withContent( notCreated( game ) );
         case "waitingForOtherPlayerToJoin":
-            content.push( waitingForOtherPlayerToJoin );
+            return withContent( waitingForOtherPlayerToJoin );
         case "gameStarted":
-            content.push( gameStarted );
+            return withContent( gameStarted );
         case "waitingForOtherPlayerToMove":
-            content.push( waitingForOtherPlayerToMove );
+            return withContent( waitingForOtherPlayerToMove );
         case "waitingPlayerMove":
-            content.push( waitingPlayerMove );
+            return withContent( waitingPlayerMove );
         case "GameWon":
-            content.push( gameWon( game ) );
+            return withContent( gameWon( game ) );
         case "draw":
-            content.push( draw );
+            return withContent( draw );
         case "otherPlayerDisconnected":
-            content.push( otherPlayerDisconnected );
+            return withContent( otherPlayerDisconnected );
     }
-    return div( { className : "game-status" }, content);
+    throw new Error("fuuuck");
 }
 
-function gameView (game, boardDOM$) {
-    return boardDOM$.map( boardDOM => 
-        div( { className: 'game' }, [
-            h1({}, "Tic Tac Toe"),
-            gameStatusView( game ),
-            boardDOM
-        ])
+function gameView (game$, boardDOM$) {
+    return Observable.combineLatest(
+        game$, 
+        boardDOM$, 
+        (game, boardDOM) => 
+            div( { className: 'game' }, [
+                h1({}, "Tic Tac Toe"),
+                gameStatusView( game ),
+                boardDOM
+            ])
     );
 }
 
@@ -93,7 +101,8 @@ function setStatus (game, status) {
 function setGameStarted(game, playerMark) {
     return Map(game).set('status', 'gameStarted')
                     .set('playerMark', playerMark)
-                    .set('otherPlayerMark', otherPlayerMark)
+                    .set('otherPlayerMark', otherPlayer(playerMark) )
+                    .set('blocked', true)
                     .toObject();
 }
 
@@ -109,14 +118,21 @@ function setStatusAndUnblock (game, status) {
     return Map(game).set('status', status).set('blocked', false).toObject();
 }
 
+function setReadyToJoin (game) {
+    return Map(game).set('readyToJoin', true).toObject();
+}
+
+
 function update(game, event) {
     switch(event.type) {
+        case 'WebSocketConnected':
+            return setReadyToJoin(game);
         case "NoPlayersAvailable":
             return setStatus(game, 'waitingForOtherPlayerToJoin');
         case "GameStarted":
-            return setStatusAndUnblock(game, event.youArePlayer);
+            return setGameStarted(game, event.youArePlayer);
         case "MakeYourMove":
-            return setStatus(game, 'waitingPlayerMove');
+            return setStatusAndUnblock(game, 'waitingPlayerMove');
         case "Wait":
             return setStatusAndBlock(game, 'waitingForOtherPlayerToMove');
             /*
@@ -131,7 +147,14 @@ function update(game, event) {
     return game;
 }
 
-function gameComponent ({DOM, WS}) {
+function gameComponent (sources) {
+    const DOMSource = sources.DOM;
+    const WS = sources.WS;
+
+    WS.subscribe( msg => {
+        console.log('receiving: ',msg);
+    })
+
     const otherPlayerMove$ = WS.filter( msg => msg.responseType === "PlayerPutAMarkInPosition" )
                                .map( msg => msg.position );
 
@@ -141,22 +164,36 @@ function gameComponent ({DOM, WS}) {
                             return msg;
                        });
 
-    const initialGame = { status : "notCreated", blocked: true };
-
     const game$ = wsEvent$.startWith({/*Mensaje vacío. ¿Se puede hacer mejor?*/})
                           .scan(update, initialGame);
 
     const blocked$ = game$.map( game => game.blocked ).distinctUntilChanged();
-    
-    const {boardDOM, boardClick$} = BoardComponent({
-        DOM,
-        otherPlayerMove$,
-        blocked$
-    });
-    
-    const message$ = messages( sources.DOM, boardClick$ ); 
+
+    const gameStarted$ = WS.filter( msg => msg.responseType === "GameStarted" )
+                           .map( msg => {
+                                return { playerMark: msg.youArePlayer , otherPlayerMark: otherPlayer( msg.youArePlayer ) };
+                            });
+
+    const boardComponent$ = gameStarted$.map( props =>
+            BoardComponent({
+                DOM: DOMSource,
+                otherPlayerMove$,
+                blocked$,
+                props
+        })
+    );
+
+    const boardDOM$ = boardComponent$.flatMapLatest( boardComponent => boardComponent.DOM ).startWith(div());
+    const boardClick$ = boardComponent$.flatMapLatest( boardComponent => boardComponent.boardClick$ );
+
+    const message$ = messages( DOMSource, boardClick$ );
+
+    const DOM = gameView(game$, boardDOM$); 
 
     return {
-        WS: message$
-    }
+        DOM,
+        websocket: message$
+    };
 }
+
+export default gameComponent;
