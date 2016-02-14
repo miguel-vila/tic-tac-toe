@@ -149,27 +149,27 @@ function update(game, event) {
 
 function gameComponent (sources) {
     const DOMSource = sources.DOM;
-    const WS = sources.WS;
+    const websocket = sources.websocket;
 
-    WS.subscribe( msg => {
+    websocket.subscribe( msg => {
         console.log('receiving: ',msg);
     })
 
-    const otherPlayerMove$ = WS.filter( msg => msg.responseType === "PlayerPutAMarkInPosition" )
+    const otherPlayerMove$ = websocket.filter( msg => msg.responseType === "PlayerPutAMarkInPosition" )
                                .map( msg => msg.position );
 
-    const wsEvent$ = WS.filter( msg => msg.responseType !== "PlayerPutAMarkInPosition" )
+    const websocketEvent$ = websocket.filter( msg => msg.responseType !== "PlayerPutAMarkInPosition" )
                        .map( msg => {
                             msg.type = msg.responseType; // this could be avoided by renaming this field in the server
                             return msg;
                        });
 
-    const game$ = wsEvent$.startWith({/*Mensaje vacío. ¿Se puede hacer mejor?*/})
+    const game$ = websocketEvent$.startWith({/*Mensaje vacío. ¿Se puede hacer mejor?*/})
                           .scan(update, initialGame);
 
     const blocked$ = game$.map( game => game.blocked ).distinctUntilChanged();
 
-    const gameStarted$ = WS.filter( msg => msg.responseType === "GameStarted" )
+    const gameStarted$ = websocket.filter( msg => msg.responseType === "GameStarted" )
                            .map( msg => {
                                 return { playerMark: msg.youArePlayer , otherPlayerMark: otherPlayer( msg.youArePlayer ) };
                             });
@@ -187,6 +187,8 @@ function gameComponent (sources) {
     const boardClick$ = boardComponent$.flatMapLatest( boardComponent => boardComponent.boardClick$ );
 
     const message$ = messages( DOMSource, boardClick$ );
+
+    message$.subscribe(x => console.log('should send message: ',x));
 
     const DOM = gameView(game$, boardDOM$); 
 
