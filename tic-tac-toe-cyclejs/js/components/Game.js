@@ -91,7 +91,7 @@ function messages (DOMSource, boardClick$) {
         joinGameMessage$,
         playAgainMessage$,
         userMove$
-    );
+    ).share();
 }
 
 function setStatus (game, status) {
