@@ -1,6 +1,6 @@
 import {Observable} from 'rx';
 import {div, table, tbody, tr, td} from '@cycle/dom';
-import tileComponent from "./Tile";
+import tileComponent from "./Tile/main";
 import isolate from '@cycle/isolate';
 
 function rowView( tilesDom$ ) {
