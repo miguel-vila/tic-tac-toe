@@ -35,10 +35,10 @@
       :id "release"
       :source-paths ["src"]
       :compiler {
-        :output-to "../public/tic_tac_toe.js"
+        :output-to "../tic-tac-toe-scala/public/tic_tac_toe.js"
         :optimizations :advanced
         ;;:preamble ["react/react.min.js"]
-        :externs ["externs/react.js"]
+        :externs ["externs/React.js"]
       }
     }]
     :test-commands {"test" ["phantomjs" "phantom/unit-test.js" "phantom/unit-test.html"]}})

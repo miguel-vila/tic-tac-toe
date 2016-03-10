@@ -8,10 +8,6 @@ import play.api.Play.current
 
 object Application extends Controller {
 
-  def index = Action {
-    Ok(views.html.index())
-  }
-
   def wsUser = WebSocket.acceptWithActor[JsValue,JsValue] { implicit req => out =>
     PlayerActor.props(out)
   }

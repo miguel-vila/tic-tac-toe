@@ -2,8 +2,8 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
-# Home page
-GET     /                           controllers.Application.index
+GET     /                           controllers.Assets.at(path="/public", file="index.html")
+GET     /cljs                       controllers.Assets.at(path="/public", file="cljs.html")
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)
