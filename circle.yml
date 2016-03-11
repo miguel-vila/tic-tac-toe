@@ -1,3 +1,12 @@
+machine:
+  timezone: UTC
+  java:
+    version: oraclejdk8
+
+general:
+  artifacts:
+    - target/universal
+
 dependencies:
   pre:
     - wget -q https://dl.bintray.com/sbt/debian/sbt-0.13.7.deb
@@ -5,6 +14,10 @@ dependencies:
   cache_directories:
     - "~/.ivy2"
     - "~/.sbt"
+    - "tic-tac-toe-scala/target/resolution-cache"
+    - "tic-tac-toe-scala/target/streams"
+    - "tic-tac-toe-scala/project/target/resolution-cache"
+    - "tic-tac-toe-scala/project/target/streams"
 
   override:
     - cd tic-tac-toe-scala && sbt test:compile
