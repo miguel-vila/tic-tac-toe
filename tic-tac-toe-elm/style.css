@@ -1,0 +1,99 @@
+.centered {
+  margin-left: auto;
+  margin-right: auto;
+}
+.centered-text {
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+#app {
+  width: 80%;
+}
+.coso {
+  margin: 0 auto;
+}
+h1 {
+  text-align: center;
+  font-size: 40px;
+  font-family: monospace;
+}
+button {
+  display: block;
+  font-family: monospace;
+  background: white;
+}
+.game {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  width: 80%;
+}
+.board {
+  border: 7px solid #FC5850;
+  border-radius: 10px;
+  margin: 20px;
+  background: #938d85;
+  display: inline-block;
+}
+h2 {
+  font-size: 20px;
+  font-family: monospace;
+  margin-left: auto;
+  margin-right: auto;
+  width: 80%;
+}
+.plays {
+  font-size: 20px;
+  font-family: monospace;
+}
+.tile {
+  position: relative;
+  background: white;
+  border: 5px solid #FC5850;
+  width: 90px;
+  height: 90px;
+  float: left;
+  color: #100d09;
+  font-weight: bold;
+  line-height: 90px;
+  font-size: 40px;
+  vertical-align: middle;
+  text-align: center;
+}
+.blocked-tile {
+  position: relative;
+  background: #E6E6E6;
+  border: 5px solid #FC5850;
+  width: 90px;
+  height: 90px;
+  float: left;
+  color: #100d09;
+  font-weight: bold;
+  line-height: 90px;
+  font-size: 40px;
+  vertical-align: middle;
+  text-align: center;
+}
+.tile:hover {
+    background-color: #DEDEDE;
+}
+.playerX {
+  color: #17F556;
+  font-weight: bold;
+  font-family: monospace;
+  font-size: 40px;
+}
+.playerO {
+  color: #51B3F6;
+  font-weight: bold;
+  font-family: monospace;
+  font-size: 40px;
+}
+.row {
+  position: relative;
+}
+.game-status {
+  height: 50px;
+  display: block;
+}
