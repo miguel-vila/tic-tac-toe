@@ -12,11 +12,12 @@ function centeredH2(text) {
     return h2( { className : "centered-text" }, [text] );
 }
 
-function notCreated (game) {
+function notCreated (game, opts) {
+    const {showConnecting} = opts;
     const connecting = !game.readyToJoin;
     const joinGameButton = button( { className : "join-game centered", disabled: connecting }, ["Join Game"] );
     const elems = [joinGameButton];
-    if(connecting) {
+    if(connecting && showConnecting) {
         elems.push( centeredH2( "Connecting..." ) );
     }
     return div( null, elems );
@@ -44,7 +45,9 @@ function gameStatusView (game) {
     const withContent = content => div( { className : "game-status" }, content) ;
     switch(game.status) {
         case "notCreated":
-            return withContent( notCreated( game ) );
+            return withContent( notCreated( game, { showConnecting: true } ) );
+        case "starting":
+            return withContent( notCreated( game, { showConnecting: false } ) );
         case "waitingForOtherPlayerToJoin":
             return withContent( waitingForOtherPlayerToJoin );
         case "gameStarted":
@@ -125,6 +128,8 @@ function setReadyToJoin (game) {
 
 function update(game, event) {
     switch(event.type) {
+        case startGameMessage:
+            return setStatus(game, 'starting');
         case 'WebSocketConnected':
             return setReadyToJoin(game);
         case "NoPlayersAvailable":
@@ -147,13 +152,28 @@ function update(game, event) {
     return game;
 }
 
+function model(websocketEvent$, DOMSource) {
+    const joinGameMessage$ = DOMSource.select('.join-game')
+                                      .events('click')
+                                      .map( _ => ({ type : startGameMessage }) );
+
+    const playAgainMessage$ = DOMSource.select('.play-again')
+                                       .events('click')
+                                       .map( _ => ({ type : startGameMessage }) );
+    const event$ = Observable.merge(
+        joinGameMessage$,
+        playAgainMessage$,
+        websocketEvent$
+    );
+
+    return event$.startWith({/*Mensaje vacío. ¿Se puede hacer mejor?*/})
+                          .scan(update, initialGame);
+
+}
+
 function gameComponent (sources) {
     const DOMSource = sources.DOM;
     const websocket = sources.websocket;
-
-    websocket.subscribe( msg => {
-        console.log('receiving: ',msg);
-    })
 
     const otherPlayerMove$ = websocket.filter( msg => msg.responseType === "PlayerPutAMarkInPosition" )
                                .map( msg => msg.position );

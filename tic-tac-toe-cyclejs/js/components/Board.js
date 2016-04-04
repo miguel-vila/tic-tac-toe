@@ -1,4 +1,4 @@
-import {Observable} from 'rx';
+import {Observable, ReplaySubject} from 'rx';
 import {div, table, tbody, tr, td} from '@cycle/dom';
 import tileComponent from "./Tile/main";
 import isolate from '@cycle/isolate';
@@ -19,6 +19,8 @@ function boardView( rowsDom$ ) {
 
 function boardComponent({ props, DOM, otherPlayerMove$, blocked$ }) {
     const {playerMark,otherPlayerMark} = props;
+    const proxy = new ReplaySubject(1);
+    const allBlocked$ = Observable.merge(proxy, blocked$);
 
     function Tile(x,y) {
         return isolate(tileComponent, `${x}${y}`);
@@ -29,7 +31,7 @@ function boardComponent({ props, DOM, otherPlayerMove$, blocked$ }) {
         return Tile(x,y)({
             DOM,
             otherPlayerClick$,
-            blocked$,
+            blocked$: allBlocked$,
             props: { x , y , playerMark , otherPlayerMark }
         });
     }
@@ -46,6 +48,7 @@ function boardComponent({ props, DOM, otherPlayerMove$, blocked$ }) {
     const boardClick$ = Observable.merge(...tilesComponentsMatrix.map( tilesComponentsRow => 
         Observable.merge(...tilesComponentsRow.map( component => component.event$ ))
     ));
+    boardClick$.subscribe(boardClick => proxy.onNext(boardClick));
 
     const dom$ = boardView( rowsDom$ );
     
