@@ -78,23 +78,25 @@ update action model =
     _ ->
       model
 
+gameText msg = h2 [class "centered-text"] [ text msg ]
+
 gameStatusView : Signal.Address Action -> Model -> Html
 gameStatusView address model =
   div [ class "game-status" ]
       [case model of
-        NotConnected -> text "Connecting ..."
-        NotStarted -> button [ Events.onClick address StartGame ] [ text "Join game"]
-        WaitingOtherPlayer -> text "Waiting other player to join"
+        NotConnected -> gameText "Connecting..."
+        NotStarted -> button [ Events.onClick address StartGame ] [ gameText "Join game" ]
+        WaitingOtherPlayer -> gameText "Waiting other player to join"
         StartedGame startedGame -> 
           if startedGame.currentPlayer == startedGame.userPlayer 
-          then text "Make your move" 
-          else text "Waiting other player's move"  
+          then gameText "Make your move"
+          else gameText "Waiting other player's move"  
         WonGame wonGame ->
           if wonGame.userPlayer == wonGame.winner
-          then text "You win!"
-          else text "You lose!"
+          then gameText "You win!"
+          else gameText "You lose!"
         DrawnGame _ ->
-          text "Draw!"
+          gameText "Draw!"
       ]
 
 fromBoardAction : Board.Action -> Action
@@ -111,7 +113,7 @@ boardView address model =
     
 view : Signal.Address Action -> Model -> Html
 view address model =
-  div []
+  div [class "game"]
       ([ h1 [] [text "Tic Tac Toe"]
       , gameStatusView address model 
       ] ++ (boardView address model))
