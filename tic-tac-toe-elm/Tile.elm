@@ -9,9 +9,9 @@ import Html.Attributes exposing (..)
 type Model = Empty Bool
            | Occupied Player
 
-initialModel : Model
-initialModel = Empty False
-  
+initialModel : Bool -> Model
+initialModel blocked = Empty blocked
+
 type Action = Click Player
             | Block
             | Unblock
@@ -42,4 +42,4 @@ view address model =
     Empty blocked -> div [ classList [("blocked-tile", blocked), ("tile", not blocked)], Events.onClick address (Click PlayerO) ] []
     Occupied player -> div [ class <| "blocked-tile" ++ " " ++ playerClass player ] [ text <| playerText player ]
 
-main = StartApp.Simple.start { model = initialModel , update = update, view = view }
+--main = StartApp.Simple.start { model = initialModel , update = update, view = view }
