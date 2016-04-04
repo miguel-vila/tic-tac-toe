@@ -9,6 +9,9 @@
       var app = Elm.fullscreen(Elm.Game, {
       });
       window.app = app;
+      app.ports.userMessages.subscribe(function(value){
+        console.log(value);
+      });
     </script>
   </body>
 </html>
