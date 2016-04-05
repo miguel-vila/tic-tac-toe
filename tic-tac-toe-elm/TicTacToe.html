@@ -6,12 +6,23 @@
   <body>
     <script type="text/javascript" src="elm.js"></script>
     <script>
+      var ws = new WebSocket('ws://localhost:9000/websockets/user');
       var app = Elm.fullscreen(Elm.Game, {
+        incomingMessages : { responseType: 'NoOp' }
       });
       window.app = app;
-      app.ports.userMessages.subscribe(function(value){
-        console.log(value);
+      app.ports.userMessages.subscribe(function(msg){
+        console.log('about to send: ', msg);
+        ws.send( JSON.stringify( msg ) );
       });
+      ws.onopen = function() {
+        console.log('Connected');
+        app.ports.incomingMessages.send( { responseType: 'Connected' } );
+      };
+      ws.onmessage = function(msg) {
+        console.log('received: ', msg.data);
+        app.ports.incomingMessages.send( JSON.parse( msg.data ) );
+      };
     </script>
   </body>
 </html>

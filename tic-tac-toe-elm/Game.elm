@@ -12,7 +12,7 @@ import Task exposing (Task)
 import Board
 import Maybe
 import Json.Encode exposing (Value)
-import Json.Decode exposing (succeed, fail,object2, (:=), andThen, string, int, Decoder)
+import Json.Decode exposing (succeed, fail,object2, (:=), andThen, string, int, Decoder, decodeValue)
 
 positionDecoder : Decoder Position
 positionDecoder = object2 (\x y -> { x = x , y = y })
@@ -23,6 +23,7 @@ serverMessagesDecoder : Decoder Action
 serverMessagesDecoder = 
   let matchResponseType responseType = 
         case responseType of
+          "NoOp"               -> succeed NoOp
           "Connected"          -> succeed Connected
           "NoPlayersAvailable" -> succeed NoOp
           "GameStarted" -> 
@@ -104,7 +105,7 @@ update action model =
       (NotStarted, Effects.none)
     (StartGame, NotStarted) ->
       (WaitingOtherPlayer, sendMessage JoinGame)
-    (GameStarted gameStarted, NotStarted) -> 
+    (GameStarted gameStarted, _) -> 
       (StartedGame { userPlayer = gameStarted.userPlayer 
                   , currentPlayer = gameStarted.whoStarts
                   , board = Board.initialModel (gameStarted.userPlayer /= gameStarted.whoStarts)
@@ -206,7 +207,14 @@ port userMessages = Signal.map encodeMessage userMessagesMailbox.signal
         
 --main = StartApp.Simple.start { model = initialModel, update = update, view = view }
 
-app = StartApp.start { init = (initialModel, Effects.none), update = update, view = view, inputs = [] }
+port incomingMessages : Signal Value
+
+incomingActions : Signal Action
+incomingActions = incomingMessages
+                |> Signal.map (decodeValue serverMessagesDecoder)
+                |> Signal.filterMap Result.toMaybe NoOp
+
+app = StartApp.start { init = (initialModel, Effects.none), update = update, view = view, inputs = [incomingActions] }
 
 main = app.html
 
