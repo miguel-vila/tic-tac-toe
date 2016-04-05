@@ -57,7 +57,7 @@ class PlayerActorTest extends Matchers with WordSpecLike with BeforeAndAfterEach
           val responseType = (json \ "responseType").as[String]
           if(responseType == UserReceivedMessage.GameStartedResponse) {
             val player = (json \ "youArePlayer").as[String]
-            whoStarts = (json \ "currentPlayer").as[String]
+            whoStarts = (json \ "whoStarts").as[String]
             assert(player == "X" || player == "O")
             assert(whoStarts == "X" || whoStarts == "O")
             if(player == "X") {
@@ -82,7 +82,7 @@ class PlayerActorTest extends Matchers with WordSpecLike with BeforeAndAfterEach
           val responseType = (json \ "responseType").as[String]
           if(responseType == UserReceivedMessage.GameStartedResponse) {
             val player = (json \ "youArePlayer").as[String]
-            assert( (json \ "currentPlayer").as[String] == whoStarts )
+            assert( (json \ "whoStarts").as[String] == whoStarts )
             assert(player == "X" || player == "O")
             if(player == "X") {
               assert( out2 == outX && userActor2 == userActorX && out1 == outO && userActor1 == userActorO )
@@ -155,7 +155,7 @@ class PlayerActorTest extends Matchers with WordSpecLike with BeforeAndAfterEach
       out1.receiveWhile(500 millis) {
         case json: JsValue =>
           val player = (json \ "youArePlayer").as[String]
-          whoStarts = (json \ "currentPlayer").as[String]
+          whoStarts = (json \ "whoStarts").as[String]
           assert(player == "X" || player == "O")
           assert(whoStarts == "X" || whoStarts == "O")
           if(player == "X") {
@@ -179,7 +179,7 @@ class PlayerActorTest extends Matchers with WordSpecLike with BeforeAndAfterEach
           val responseType = (json \ "responseType").as[String]
           if(responseType == UserReceivedMessage.GameStartedResponse) {
             val player = (json \ "youArePlayer").as[String]
-            assert( (json \ "currentPlayer").as[String] == whoStarts )
+            assert( (json \ "whoStarts").as[String] == whoStarts )
             assert(player == "X" || player == "O")
             if(player == "X") {
               assert( out2 == outX && userActor2 == userActorX && out1 == outO && userActor1 == userActorO )

@@ -30,22 +30,22 @@ with ImplicitSender {
 
     "Envía mensaje con información del juego al crearse" in {
       val (playerX,playerO,gameActor) = setup()
-      playerX.expectMsg(500 millis, GameStarted(gameActor, youArePlayer = PlayerX, currentPlayer = PlayerX))
-      playerO.expectMsg(500 millis, GameStarted(gameActor, youArePlayer = PlayerO, currentPlayer = PlayerX))
+      playerX.expectMsg(500 millis, GameStarted(gameActor, youArePlayer = PlayerX, whoStarts = PlayerX))
+      playerO.expectMsg(500 millis, GameStarted(gameActor, youArePlayer = PlayerO, whoStarts = PlayerX))
     }
 
     "Permite hacer jugadas y notifica a los jugadores de ellas" in {
       val (playerX,playerO,gameActor) = setup()
-      playerX.expectMsg(500 millis, GameStarted(gameActor, youArePlayer = PlayerX, currentPlayer = PlayerX))
-      playerO.expectMsg(500 millis, GameStarted(gameActor, youArePlayer = PlayerO, currentPlayer = PlayerX))
+      playerX.expectMsg(500 millis, GameStarted(gameActor, youArePlayer = PlayerX, whoStarts = PlayerX))
+      playerO.expectMsg(500 millis, GameStarted(gameActor, youArePlayer = PlayerO, whoStarts = PlayerX))
       playerX.send(gameActor, playAt(0,0))
       playerO.expectMsg(PlayerPutAMarkInPosition(PlayerX,Position(0,0)))
     }
 
     "Lleva el estado de una partida y notifica su ganador" in {
       val (playerX,playerO,gameActor) = setup()
-      playerX.expectMsg(500 millis, GameStarted(gameActor, youArePlayer = PlayerX, currentPlayer = PlayerX))
-      playerO.expectMsg(500 millis, GameStarted(gameActor, youArePlayer = PlayerO, currentPlayer = PlayerX))
+      playerX.expectMsg(500 millis, GameStarted(gameActor, youArePlayer = PlayerX, whoStarts = PlayerX))
+      playerO.expectMsg(500 millis, GameStarted(gameActor, youArePlayer = PlayerO, whoStarts = PlayerX))
 
       playerX.send(gameActor, playAt(0,0))
       playerO.expectMsg(PlayerPutAMarkInPosition(PlayerX,Position(0,0)))
@@ -68,8 +68,8 @@ with ImplicitSender {
 
     "Permite jugar una partida y notifica si hay empate" in {
       val (playerX,playerO,gameActor) = setup()
-      playerX.expectMsg(500 millis, GameStarted(gameActor, youArePlayer = PlayerX, currentPlayer = PlayerX))
-      playerO.expectMsg(500 millis, GameStarted(gameActor, youArePlayer = PlayerO, currentPlayer = PlayerX))
+      playerX.expectMsg(500 millis, GameStarted(gameActor, youArePlayer = PlayerX, whoStarts = PlayerX))
+      playerO.expectMsg(500 millis, GameStarted(gameActor, youArePlayer = PlayerO, whoStarts = PlayerX))
 
       def playX(x: Int, y: Int) = {
         playerX.send(gameActor, playAt(x,y))

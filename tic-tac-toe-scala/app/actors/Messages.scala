@@ -17,7 +17,7 @@ object UserSentMessage {
 
 sealed trait UserReceivedMessage
 case object NoPlayersAvailable extends UserReceivedMessage
-case class GameStarted(gameActor: ActorRef, youArePlayer: Player, currentPlayer: Player) extends UserReceivedMessage
+case class GameStarted(gameActor: ActorRef, youArePlayer: Player, whoStarts: Player) extends UserReceivedMessage
 
 sealed trait GameFinishedMessage extends UserReceivedMessage
 object Draw extends GameFinishedMessage

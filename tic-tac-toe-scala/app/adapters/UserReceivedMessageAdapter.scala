@@ -18,7 +18,7 @@ object UserReceivedMessageAdapter {
         Json.obj(
           responseType -> UserReceivedMessage.GameStartedResponse,
           "youArePlayer" -> youArePlayer.toString,
-          "currentPlayer" -> currentPlayer.toString
+          "whoStarts" -> currentPlayer.toString
         )
       case Draw =>
         Json.obj(responseType -> UserReceivedMessage.DrawResponse)
