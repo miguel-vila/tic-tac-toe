@@ -21,14 +21,14 @@ class GameActor(playerX: ActorRef, playerO: ActorRef, rng: Rng[Player] = Game.ra
     case PlayerO => playerO
   }
 
-  def sendTurnMessages(game: ActiveGame): Unit = {
-    getActor(game.currentPlayer) ! MakeYourMove
-    getActor(game.otherPlayer) ! Wait
+  def sendGameStartedMessages(game: ActiveGame): Unit = {
+    playerX ! GameStarted(self, PlayerX, game.currentPlayer)
+    playerO ! GameStarted(self, PlayerO, game.currentPlayer)
   }
 
   def receive = {
     val game = Game.newWithRandomPlayer(rng)
-    sendTurnMessages(game)
+    sendGameStartedMessages(game)
     playing(game)
   }
 
@@ -39,7 +39,6 @@ class GameActor(playerX: ActorRef, playerO: ActorRef, rng: Rng[Player] = Game.ra
       val newGame = game.putMark(game.currentPlayer, position)
       newGame match {
         case activeGame: ActiveGame =>
-          sendTurnMessages(activeGame)
           become(playing(activeGame))
         case drawGame: DrawGame =>
           broadcast(Draw)

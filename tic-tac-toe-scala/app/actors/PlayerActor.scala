@@ -27,27 +27,20 @@ class PlayerActor(out: ActorRef) extends Actor with WithGameCreator {
       gameCreator ! StartGame
     case NoPlayersAvailable =>
       respond(NoPlayersAvailable)
-    case gameStarted @ GameStarted(_gameActor, _thisPlayer) =>
+    case gameStarted @ GameStarted(_gameActor, _thisPlayer, _currentPlayer) =>
       respond(gameStarted)
       thisPlayer = _thisPlayer
       gameActor = _gameActor
-      become(gameAboutToStart)
-  }
-
-  def gameAboutToStart: Receive = {
-    case Wait =>
-      respond(Wait)
-      become(waiting)
-    case MakeYourMove =>
-      respond(MakeYourMove)
-      become(userTurn)
+      if(thisPlayer == _currentPlayer) {
+        become(userTurn)
+      } else {
+        become(waiting)
+      }
   }
 
   def waiting: Receive = {
     case playerPutAMark @ PlayerPutAMarkInPosition(otherPlayer, position) =>
       respond(playerPutAMark)
-    case MakeYourMove =>
-      respond(MakeYourMove)
       become(userTurn)
     case gameFinished: GameFinishedMessage =>
       respond(gameFinished)
@@ -64,8 +57,6 @@ class PlayerActor(out: ActorRef) extends Actor with WithGameCreator {
     case playAtPosition: PlayAtPosition =>
       println(s"userActor- userTurn - $playAtPosition")
       gameActor ! playAtPosition
-    case Wait =>
-      respond(Wait)
       become(waiting)
     case gameFinished: GameFinishedMessage =>
       respond(gameFinished)

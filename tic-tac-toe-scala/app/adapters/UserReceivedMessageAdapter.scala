@@ -14,20 +14,18 @@ object UserReceivedMessageAdapter {
     message match {
       case NoPlayersAvailable =>
         Json.obj(responseType -> UserReceivedMessage.NoPlayersAvailableResponse)
-      case GameStarted(_, youArePlayer) =>
+      case GameStarted(_, youArePlayer, currentPlayer) =>
         Json.obj(
           responseType -> UserReceivedMessage.GameStartedResponse,
-          "youArePlayer" -> youArePlayer.toString)
+          "youArePlayer" -> youArePlayer.toString,
+          "currentPlayer" -> currentPlayer.toString
+        )
       case Draw =>
         Json.obj(responseType -> UserReceivedMessage.DrawResponse)
       case GameWon(winner) =>
         Json.obj(
           responseType -> UserReceivedMessage.GameWonResponse,
           "winner" -> WinnerAdapter.toJson(winner))
-      case Wait =>
-        Json.obj(responseType -> UserReceivedMessage.WaitResponse)
-      case MakeYourMove =>
-        Json.obj(responseType -> UserReceivedMessage.MakeYourMoveResponse)
       case PlayerPutAMarkInPosition(player, position) =>
         Json.obj(
           responseType -> UserReceivedMessage.PlayerPutAMarkInPositionResponse,

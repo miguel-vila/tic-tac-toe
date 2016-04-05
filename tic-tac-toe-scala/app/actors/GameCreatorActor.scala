@@ -20,8 +20,6 @@ class GameCreatorActor extends Actor {
           val player1 = originalSender
           val player2 = _waitingPlayer
           val gameActor = system.actorOf(GameActor.props(player1, player2), s"game-$gameId")
-          player1 ! GameStarted(gameActor, PlayerX)
-          player2 ! GameStarted(gameActor, PlayerO)
           gameId += 1
           waitingPlayer = None
         case None =>
