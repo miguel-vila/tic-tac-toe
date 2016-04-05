@@ -1,7 +1,7 @@
 module Game where
 
 import Html exposing (..)
-import Player exposing (Player(..), otherPlayer)
+import Player exposing (Player(..), otherPlayer, playerDecoder)
 import Html.Events as Events
 import StartApp.Simple 
 import StartApp
@@ -11,8 +11,32 @@ import Html.Attributes exposing (..)
 import Task exposing (Task)
 import Board
 import Maybe
-import Json.Encode exposing (string, int, null, Value)
---import Json.Decode exposing (Decoder, decodeValue,)
+import Json.Encode exposing (Value)
+import Json.Decode exposing (succeed, fail,object2, (:=), andThen, string, int, Decoder)
+
+positionDecoder : Decoder Position
+positionDecoder = object2 (\x y -> { x = x , y = y })
+                  ("x" := int)
+                  ("y" := int)
+
+serverMessagesDecoder : Decoder Action
+serverMessagesDecoder = 
+  let matchResponseType responseType = 
+        case responseType of
+          "Connected"          -> succeed Connected
+          "NoPlayersAvailable" -> succeed NoOp
+          "GameStarted" -> 
+            object2 (\userPlayer whoStarts -> GameStarted { userPlayer = userPlayer, whoStarts = whoStarts }) 
+                      ("youArePlayer" := playerDecoder) 
+                      ("whoStarts" := playerDecoder)
+          "PlayerPutAMarkInPosition" -> object2 (\player pos -> PlayerClick { player = player , position = pos })
+                                        ("player" := playerDecoder)
+                                        ("position" := positionDecoder)
+          "Draw" -> succeed GameDraw
+          "GameWon" -> Json.Decode.map GameWon ("winner" := playerDecoder)
+          "UserDisconnected" -> succeed OtherPlayerDisconnected
+          other -> fail ("Unrecognized response type: " ++ other)
+  in andThen ("responseType" := string) matchResponseType
 
 type alias Board = Board.Model
 
@@ -34,6 +58,7 @@ type Model = NotConnected
            | StartedGame Started
            | WonGame Won
            | DrawnGame Drawn
+           | PlayerDisconnected
 
 getBoard : Model -> Maybe Board.Model
 getBoard model = 
@@ -47,7 +72,7 @@ initialModel : Model
 initialModel = NotStarted
 
 type alias NewGameInfo = { userPlayer : Player
-                         , currentPlayer : Player
+                         , whoStarts  : Player
                          }
 
 type alias Position = { x : Int
@@ -64,6 +89,7 @@ type Action = Connected
             | PlayerClick PlayerMovement
             | GameWon Player
             | GameDraw
+            | OtherPlayerDisconnected
             | NoOp
 
 sendMessage : UserMessage -> Effects Action
@@ -80,8 +106,8 @@ update action model =
       (WaitingOtherPlayer, sendMessage JoinGame)
     (GameStarted gameStarted, NotStarted) -> 
       (StartedGame { userPlayer = gameStarted.userPlayer 
-                  , currentPlayer = gameStarted.currentPlayer
-                  , board = Board.initialModel (gameStarted.userPlayer /= gameStarted.currentPlayer)
+                  , currentPlayer = gameStarted.whoStarts
+                  , board = Board.initialModel (gameStarted.userPlayer /= gameStarted.whoStarts)
                   }
       , Effects.none
       )
@@ -106,6 +132,10 @@ update action model =
       (DrawnGame { board = startedGame.board }
       , Effects.none
       )
+    (OtherPlayerDisconnected, StartedGame _) ->
+      (PlayerDisconnected
+      , Effects.none
+      )
     _ ->
       (model, Effects.none)
 
@@ -128,6 +158,8 @@ gameStatusView address model =
           else gameText "You lose!"
         DrawnGame _ ->
           gameText "Draw!"
+        PlayerDisconnected ->
+          gameText "The other user has disconnected!"
       ]
 
 fromBoardAction : Board.Action -> Action
@@ -161,13 +193,13 @@ userMessagesMailbox = mailbox NoMessage
 encodeMessage : UserMessage -> Value
 encodeMessage  message = 
   case message of
-    JoinGame -> Json.Encode.object ["command" => string "StartGame"]
+    JoinGame -> Json.Encode.object ["command" => Json.Encode.string "StartGame"]
     UserMovement position -> Json.Encode.object 
-                             [ "command"  => string "PlayAtPosition"
-                             , "position" => Json.Encode.object [ "x" => int position.x
-                                                                , "y" => int position.y]
+                             [ "command"  => Json.Encode.string "PlayAtPosition"
+                             , "position" => Json.Encode.object [ "x" => Json.Encode.int position.x
+                                                                , "y" => Json.Encode.int position.y]
                              ]
-    NoMessage -> null
+    NoMessage -> Json.Encode.null
 
 port userMessages : Signal Value
 port userMessages = Signal.map encodeMessage userMessagesMailbox.signal
