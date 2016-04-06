@@ -78,9 +78,7 @@
     (js/console.log "ResponseType:" (pr-str responseType))
     (case responseType
       "NoPlayersAvailable" (om/transact! game gm/wait-player-to-join)
-      "GameStarted" (om/transact! game #(gm/game-started % (get message "youArePlayer")))
-      "Wait" (om/transact! game gm/waiting-other-player-move)
-      "MakeYourMove" (om/transact! game gm/player-turn)
+      "GameStarted" (om/transact! game #(gm/game-started % (get message "youArePlayer") (get message "whoStarts")))
       "PlayerPutAMarkInPosition" (om/transact! game #(gm/other-player-put-a-mark % (get message "position")))
       "GameWon" (om/transact! game #(gm/game-won % (get message "winner")))
       "Draw" (om/transact! game #(gm/game-draw %))
@@ -100,7 +98,6 @@
                          (case game-status
                            :not-created (el/not-created-element game)
                            :waiting-other-player-to-join (dom/h2 (centered-text) "Waiting other player to join")
-                           :game-started (dom/h2 (centered-text) "Game started!")
                            :waiting-other-player-to-move (dom/h2 (centered-text) "Waiting for other player's move")
                            :waiting-player-to-move (dom/h2 (centered-text) "Make your move")
                            :won (el/game-won-element game)
