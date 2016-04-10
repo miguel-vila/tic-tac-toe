@@ -1,6 +1,10 @@
 (ns tic-tac-toe.websocket)
 
-(def ws (js/WebSocket. "ws://tic-tac-toe-scala-cljs.herokuapp.com/websockets/user"))
+(def host (.-host js/location))
+
+(js/console.log host)
+
+(def ws (js/WebSocket. (str "ws://" host "/websockets/user")))
 
 (defn send [message]
   (.send ws message))
