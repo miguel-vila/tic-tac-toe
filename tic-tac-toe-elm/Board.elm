@@ -12,9 +12,9 @@ import Array exposing (Array)
 type alias Row   = Array Tile.Model
 type alias Model = Array Row
 
-initialModel : Bool -> Model
-initialModel blocked = 
-  let row = Array.repeat 3 (Tile.initialModel blocked)
+initialModel : Bool -> Player -> Model
+initialModel blocked player = 
+  let row = Array.repeat 3 (Tile.initialModel blocked player)
   in Array.repeat 3 row
 
 type Action = BoardClick Int Int Player
@@ -75,8 +75,4 @@ view address model =
            (model
            |> Array.indexedMap (rowView address) 
            |> Array.toList)
-        ,  button [Events.onClick address BlockBoard] [text "block"] 
-        ,  button [Events.onClick address UnblockBoard] [text "unblock"] 
         ]
-
-main = StartApp.Simple.start { model = initialModel False, update = update, view = view }

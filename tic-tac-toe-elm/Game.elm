@@ -1,7 +1,7 @@
 module Game where
 
 import Html exposing (..)
-import Player exposing (Player(..), otherPlayer, playerDecoder)
+import Player exposing (Player(..), otherPlayer)
 import Html.Events as Events
 import StartApp.Simple 
 import StartApp
@@ -12,32 +12,10 @@ import Task exposing (Task)
 import Board
 import Maybe
 import Json.Encode exposing (Value)
-import Json.Decode exposing (succeed, fail,object2, (:=), andThen, string, int, Decoder, decodeValue)
-
-positionDecoder : Decoder Position
-positionDecoder = object2 (\x y -> { x = x , y = y })
-                  ("x" := int)
-                  ("y" := int)
-
-serverMessagesDecoder : Decoder Action
-serverMessagesDecoder = 
-  let matchResponseType responseType = 
-        case responseType of
-          "NoOp"               -> succeed NoOp
-          "Connected"          -> succeed Connected
-          "NoPlayersAvailable" -> succeed NoOp
-          "GameStarted" -> 
-            object2 (\userPlayer whoStarts -> GameStarted { userPlayer = userPlayer, whoStarts = whoStarts }) 
-                      ("youArePlayer" := playerDecoder) 
-                      ("whoStarts" := playerDecoder)
-          "PlayerPutAMarkInPosition" -> object2 (\player pos -> PlayerClick { player = player , position = pos })
-                                        ("player" := playerDecoder)
-                                        ("position" := positionDecoder)
-          "Draw" -> succeed GameDraw
-          "GameWon" -> Json.Decode.map GameWon ("winner" := playerDecoder)
-          "UserDisconnected" -> succeed OtherPlayerDisconnected
-          other -> fail ("Unrecognized response type: " ++ other)
-  in andThen ("responseType" := string) matchResponseType
+import Json.Decode exposing (decodeValue)
+import GameAction exposing (..)
+import Position exposing (..)
+import UserMessage exposing (..)
 
 type alias Board = Board.Model
 
@@ -59,39 +37,22 @@ type Model = NotConnected
            | StartedGame Started
            | WonGame Won
            | DrawnGame Drawn
-           | PlayerDisconnected
+           | PlayerDisconnected Board
+           | Errored String
 
 getBoard : Model -> Maybe Board.Model
 getBoard model = 
   case model of
-    StartedGame startedGame -> Just startedGame.board
-    WonGame wownGame        -> Just wownGame.board
-    DrawnGame drawnGame     -> Just drawnGame.board
-    _                       -> Nothing
+    StartedGame startedGame  -> Just startedGame.board
+    WonGame wownGame         -> Just wownGame.board
+    DrawnGame drawnGame      -> Just drawnGame.board
+    PlayerDisconnected board -> Just board
+    _                        -> Nothing
 
 initialModel : Model
 initialModel = NotStarted
 
-type alias NewGameInfo = { userPlayer : Player
-                         , whoStarts  : Player
-                         }
-
-type alias Position = { x : Int
-                      , y : Int 
-                      }
-
-type alias PlayerMovement = { player   : Player
-                            , position : Position
-                            }
-
-type Action = Connected
-            | StartGame
-            | GameStarted NewGameInfo
-            | PlayerClick PlayerMovement
-            | GameWon Player
-            | GameDraw
-            | OtherPlayerDisconnected
-            | NoOp
+type alias Action = GameAction
 
 sendMessage : UserMessage -> Effects Action
 sendMessage message = Signal.send userMessagesMailbox.address message
@@ -108,10 +69,9 @@ update action model =
     (GameStarted gameStarted, _) -> 
       (StartedGame { userPlayer = gameStarted.userPlayer 
                   , currentPlayer = gameStarted.whoStarts
-                  , board = Board.initialModel (gameStarted.userPlayer /= gameStarted.whoStarts)
+                  , board = Board.initialModel (gameStarted.userPlayer /= gameStarted.whoStarts) gameStarted.userPlayer
                   }
-      , Effects.none
-      )
+      , Effects.none )
     (PlayerClick mov, StartedGame startedGame) ->
       if mov.player == startedGame.currentPlayer then
          let pos = mov.position
@@ -122,21 +82,21 @@ update action model =
          in (StartedGame { startedGame 
                           | board = Board.update blockAction board'
                           , currentPlayer = Player.otherPlayer startedGame.currentPlayer }
-            , effects
-            )
+            , effects )
       else (model, Effects.none)
     (GameWon winner, StartedGame startedGame) ->
-      (WonGame { userPlayer = startedGame.userPlayer, winner = winner, board = startedGame.board }
-      , Effects.none
-      )
+      let blockedBoard = Board.update Board.BlockBoard startedGame.board
+      in ( WonGame { userPlayer = startedGame.userPlayer, winner = winner, board = blockedBoard }
+         , Effects.none )
     (GameDraw, StartedGame startedGame) ->
-      (DrawnGame { board = startedGame.board }
-      , Effects.none
-      )
-    (OtherPlayerDisconnected, StartedGame _) ->
-      (PlayerDisconnected
-      , Effects.none
-      )
+      let blockedBoard = Board.update Board.BlockBoard startedGame.board
+      in ( DrawnGame { board = blockedBoard }
+         , Effects.none )
+    (OtherPlayerDisconnected, StartedGame startedGame) ->
+      let blockedBoard = Board.update Board.BlockBoard startedGame.board
+      in ( PlayerDisconnected blockedBoard
+         , Effects.none )
+    (ErrorResponse error, _) -> (Errored error, Effects.none)
     _ ->
       (model, Effects.none)
 
@@ -146,20 +106,21 @@ gameStatusView : Signal.Address Action -> Model -> Html
 gameStatusView address model =
   div [ class "game-status" ]
       [case model of
+        Errored error -> gameText error
         NotConnected -> gameText "Connecting..."
         NotStarted -> button [ Events.onClick address StartGame ] [ gameText "Join game" ]
         WaitingOtherPlayer -> gameText "Waiting other player to join"
         StartedGame startedGame -> 
           if startedGame.currentPlayer == startedGame.userPlayer 
           then gameText "Make your move"
-          else gameText "Waiting other player's move"  
+          else gameText "Waiting other player's move"
         WonGame wonGame ->
           if wonGame.userPlayer == wonGame.winner
           then gameText "You win!"
           else gameText "You lose!"
         DrawnGame _ ->
           gameText "Draw!"
-        PlayerDisconnected ->
+        PlayerDisconnected _ ->
           gameText "The other user has disconnected!"
       ]
 
@@ -182,37 +143,22 @@ view address model =
       , gameStatusView address model 
       ] ++ (boardView address model))
 
-type UserMessage = JoinGame
-                 | UserMovement Position
-                 | NoMessage
-
 userMessagesMailbox : Mailbox UserMessage
 userMessagesMailbox = mailbox NoMessage
-
-(=>) = (,)
-
-encodeMessage : UserMessage -> Value
-encodeMessage  message = 
-  case message of
-    JoinGame -> Json.Encode.object ["command" => Json.Encode.string "StartGame"]
-    UserMovement position -> Json.Encode.object 
-                             [ "command"  => Json.Encode.string "PlayAtPosition"
-                             , "position" => Json.Encode.object [ "x" => Json.Encode.int position.x
-                                                                , "y" => Json.Encode.int position.y]
-                             ]
-    NoMessage -> Json.Encode.null
 
 port userMessages : Signal Value
 port userMessages = Signal.map encodeMessage userMessagesMailbox.signal
         
---main = StartApp.Simple.start { model = initialModel, update = update, view = view }
-
 port incomingMessages : Signal Value
 
 incomingActions : Signal Action
-incomingActions = incomingMessages
-                |> Signal.map (decodeValue serverMessagesDecoder)
-                |> Signal.filterMap Result.toMaybe NoOp
+incomingActions = let handle res = 
+                    case res of
+                      Ok action -> action
+                      Err error -> ErrorResponse error
+                  in incomingMessages
+                    |> Signal.map (decodeValue serverMessagesDecoder)
+                    |> Signal.map handle
 
 app = StartApp.start { init = (initialModel, Effects.none), update = update, view = view, inputs = [incomingActions] }
 
