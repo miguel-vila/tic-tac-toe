@@ -8,4 +8,22 @@ A simple multi player tic tac toe game built using ClojureScript's Om library fo
 
 ## How to build and run
 
-> TODO
+### Scala backend
+
+To run the scala server:
+
+```bash
+> cd tic-tac-toe-scala
+> sbt run
+```
+
+Go to localhost:9000
+
+### Clojurescript client
+
+To put the compiled js file inside the public folder of the scala project:
+
+```bash
+> cd tic-tac-toe-cljs
+> lein cljsbuild once release
+```
