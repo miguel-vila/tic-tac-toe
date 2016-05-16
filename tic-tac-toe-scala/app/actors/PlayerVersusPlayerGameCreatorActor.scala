@@ -6,7 +6,7 @@ import models.{PlayerO, PlayerX}
 /**
  * Created by mglvl on 24/01/15.
  */
-class GameCreatorActor extends Actor {
+class PlayerVersusPlayerGameCreatorActor extends Actor {
   import context._
 
   var gameId = 1
@@ -19,7 +19,7 @@ class GameCreatorActor extends Actor {
         case Some(_waitingPlayer) =>
           val player1 = originalSender
           val player2 = _waitingPlayer
-          val gameActor = system.actorOf(GameActor.props(player1, player2), s"game-$gameId")
+          val gameActor = system.actorOf(PVPGameActor.props(player1, player2), s"pvp-me-$gameId")
           gameId += 1
           waitingPlayer = None
         case None =>
@@ -32,6 +32,6 @@ class GameCreatorActor extends Actor {
 
 }
 
-object GameCreatorActor{
-  def props(): Props = Props(new GameCreatorActor)
+object PlayerVersusPlayerGameCreatorActor{
+  def props(): Props = Props(new PlayerVersusPlayerGameCreatorActor)
 }

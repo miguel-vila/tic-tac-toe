@@ -8,7 +8,7 @@ import scala.collection.mutable
 /**
  * Created by mglvl on 24/01/15.
  */
-class GameActor(playerX: ActorRef, playerO: ActorRef, rng: Rng[Player] = Game.randomPlayer()) extends Actor {
+class PVPGameActor(playerX: ActorRef, playerO: ActorRef, rng: Rng[Player] = Game.randomPlayer()) extends Actor {
   import context._
 
   def broadcast(message: Any): Unit = {
@@ -36,7 +36,7 @@ class GameActor(playerX: ActorRef, playerO: ActorRef, rng: Rng[Player] = Game.ra
     case PlayAtPosition(position) if sender() == getActor(game.currentPlayer) =>
       val otherPlayer = game.otherPlayer
       getActor(otherPlayer) ! PlayerPutAMarkInPosition(game.currentPlayer, position)
-      val newGame = game.putMark(game.currentPlayer, position)
+      val newGame = game.putMark(position)
       newGame match {
         case activeGame: ActiveGame =>
           become(playing(activeGame))
@@ -60,6 +60,6 @@ class GameActor(playerX: ActorRef, playerO: ActorRef, rng: Rng[Player] = Game.ra
 
 }
 
-object GameActor {
-  def props(playerX: ActorRef, playerO: ActorRef, rng: Rng[Player] = Game.randomPlayer()) = Props(new GameActor(playerX,playerO,rng))
+object PVPGameActor {
+  def props(playerX: ActorRef, playerO: ActorRef, rng: Rng[Player] = Game.randomPlayer()) = Props(new PVPGameActor(playerX,playerO,rng))
 }

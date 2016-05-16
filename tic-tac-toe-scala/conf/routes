@@ -4,7 +4,10 @@
 
 GET     /                           controllers.Assets.at(path="/public", file="index.html")
 GET     /cljs                       controllers.Assets.at(path="/public", file="cljs.html")
+GET     /cljs/pvp                   controllers.Application.cljsViewPVP
+GET     /cljs/pvb                   controllers.Application.cljsViewPVB
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)
-GET     /websockets/user            controllers.Application.wsUser
+GET     /websockets/pvp             controllers.Application.wsPVP
+GET     /websockets/pvb             controllers.Application.wsPVB

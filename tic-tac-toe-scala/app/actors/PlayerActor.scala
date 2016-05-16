@@ -5,11 +5,17 @@ import models.Player
 import play.api.libs.json.{Json, JsObject, JsValue}
 import adapters.{ UserReceivedMessageAdapter => OutAdapter , UserSentMessagesAdapter => InAdapter }
 
-/**
- * Created by mglvl on 17/01/15.
- */
-class PlayerActor(out: ActorRef) extends Actor with WithGameCreator {
+sealed trait GameType
+case object PlayerVersusPlayerGame extends GameType
+case object PlayerVersusBotGame extends GameType
+
+class PlayerActor(out: ActorRef, gameType: GameType) extends Actor with WithGameCreator {
   import context._
+
+  val gameCreator = gameType match {
+    case PlayerVersusPlayerGame  => playerVersusPlayerGameCreator
+    case PlayerVersusBotGame => playerVersusBotGameCreator
+  }
 
   var thisPlayer: Player = _
   var gameActor: ActorRef = _
@@ -77,5 +83,5 @@ class PlayerActor(out: ActorRef) extends Actor with WithGameCreator {
 }
 
 object PlayerActor {
-  def props(out: ActorRef): Props = Props(new PlayerActor(out))
+  def props(out: ActorRef, gameType: GameType): Props = Props(new PlayerActor(out, gameType))
 }

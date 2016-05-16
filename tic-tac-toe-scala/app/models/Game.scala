@@ -25,7 +25,8 @@ case class ActiveGame(board: Board, currentPlayer: Player) extends Game {
       PlayerX
     }
 
-  def putMark(mark: Player, position: Position): Game = {
+  def putMark(position: Position): Game = {
+    val mark = currentPlayer
     if(currentPlayer != mark) {
       throw IncorrectPlayerError
     } else {

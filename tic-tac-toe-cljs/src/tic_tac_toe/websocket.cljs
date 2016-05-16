@@ -4,7 +4,9 @@
 
 (js/console.log host)
 
-(def ws (js/WebSocket. (str "ws://" host "/websockets/user")))
+(def websocketRoute (aget js/Window "websocketRoute"))
+
+(def ws (js/WebSocket. (str "ws://" host websocketRoute)))
 
 (defn send [message]
   (.send ws message))

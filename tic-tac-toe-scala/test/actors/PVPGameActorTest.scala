@@ -10,7 +10,7 @@ import scala.concurrent.duration._
 /**
  * Created by mglvl on 25/01/15.
  */
-class GameActorTest extends TestKit(ActorSystem("GameActorTest"))
+class PVPGameActorTest extends TestKit(ActorSystem("GameActorTest"))
 with MustMatchers
 with WordSpecLike
 with ImplicitSender {
@@ -22,7 +22,7 @@ with ImplicitSender {
     def setup(): (TestProbe,TestProbe,ActorRef) = {
       val playerX = new TestProbe(system)
       val playerO = new TestProbe(system)
-      val gameActor = system.actorOf(GameActor.props(playerX.ref, playerO.ref, rngEmpiezaX))
+      val gameActor = system.actorOf(PVPGameActor.props(playerX.ref, playerO.ref, rngEmpiezaX))
       (playerX,playerO,gameActor)
     }
 

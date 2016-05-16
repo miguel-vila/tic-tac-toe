@@ -25,7 +25,7 @@ class PlayerActorTest extends Matchers with WordSpecLike with BeforeAndAfterEach
 
   def createUserActor(i: Int = 1)(implicit system: ActorSystem): (TestProbe,ActorRef) = {
     val out = TestProbe()
-    val userActor = system.actorOf(PlayerActor.props(out.ref), s"user-actor-$i")
+    val userActor = system.actorOf(PlayerActor.props(out.ref, PlayerVersusPlayerGame), s"user-actor-$i")
     (out, userActor)
   }
 
