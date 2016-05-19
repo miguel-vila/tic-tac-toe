@@ -2,7 +2,7 @@ package actors
 
 import akka.actor.{ActorRef, ActorSystem}
 import akka.testkit.{TestProbe, TestKit}
-import models.NW_SE_DiagonalLine
+import models.UpperLeftToBottomRightLine
 import org.scalatest.{BeforeAndAfterEach, WordSpecLike, Matchers}
 import play.api.libs.json._
 import scala.concurrent.duration._

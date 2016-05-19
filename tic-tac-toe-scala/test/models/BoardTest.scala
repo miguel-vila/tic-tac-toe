@@ -190,7 +190,7 @@ class BoardTest extends Matchers with WordSpecLike {
           )
         )
       )
-      board.upperLeftBottomRightWinner should equal (Some(Winner(PlayerX,NW_SE_DiagonalLine)))
+      board.upperLeftBottomRightWinner should equal (Some(Winner(PlayerX,UpperLeftToBottomRightLine)))
     }
 
     "Identificar el ganador, si lo hay, en la diagonal NW-SE (3)" in {
@@ -213,7 +213,7 @@ class BoardTest extends Matchers with WordSpecLike {
           )
         )
       )
-      board.upperLeftBottomRightWinner should equal (Some(Winner(PlayerO,NW_SE_DiagonalLine)))
+      board.upperLeftBottomRightWinner should equal (Some(Winner(PlayerO,UpperLeftToBottomRightLine)))
     }
 
     "Identificar el ganador, si lo hay, en la diagonal NE-SW (1)" in {
@@ -259,7 +259,7 @@ class BoardTest extends Matchers with WordSpecLike {
           )
         )
       )
-      board.upperRightBottomLeftWinner should equal (Some(Winner(PlayerX,NE_SW_DiagonalLine)))
+      board.upperRightBottomLeftWinner should equal (Some(Winner(PlayerX,UpperRightToBottomLeftLine)))
     }
 
     "Identificar el ganador, si lo hay, en la diagonal NE-SW (3)" in {
@@ -282,7 +282,7 @@ class BoardTest extends Matchers with WordSpecLike {
           )
         )
       )
-      board.upperRightBottomLeftWinner should equal (Some(Winner(PlayerO,NE_SW_DiagonalLine)))
+      board.upperRightBottomLeftWinner should equal (Some(Winner(PlayerO,UpperRightToBottomLeftLine)))
     }
 
   }

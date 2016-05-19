@@ -3,11 +3,7 @@ package actors
 import akka.actor.{Props, ActorRef, Actor}
 import com.nicta.rng.Rng
 import models._
-import scala.collection.mutable
 
-/**
- * Created by mglvl on 24/01/15.
- */
 class PVPGameActor(playerX: ActorRef, playerO: ActorRef, rng: Rng[Player] = Game.randomPlayer()) extends Actor {
   import context._
 

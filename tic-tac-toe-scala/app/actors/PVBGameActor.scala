@@ -2,7 +2,7 @@ package actors
 
 import akka.actor.{Actor, ActorRef, Props}
 import com.nicta.rng.Rng
-import models.{WonGame, _}
+import models._
 
 class PVBGameActor(userActor: ActorRef, userPlayer: Player, rng: Rng[Player] = Game.randomPlayer()) extends Actor {
   import context._

@@ -2,9 +2,6 @@ package models
 
 import exceptions.CellAlreadyMarkedError
 
-/**
- * Created by mglvl on 24/01/15.
- */
 case class Board(cells: Vector[Vector[Cell]]) extends AnyVal {
 
   def putMark(mark: Player, position: Position): Board = {
@@ -62,7 +59,7 @@ case class Board(cells: Vector[Vector[Cell]]) extends AnyVal {
   private[models] def upperLeftBottomRightWinner: Option[Winner] = {
     for {
       player <- Cell.sameMark(upperLeftBottomRightDiagonal)
-    } yield Winner(player, NW_SE_DiagonalLine)
+    } yield Winner(player, UpperLeftToBottomRightLine)
   }
 
   private[models] def somebodyCanWinInTheUpperLeftBottomRightDiagonal: Boolean =
@@ -71,7 +68,7 @@ case class Board(cells: Vector[Vector[Cell]]) extends AnyVal {
   private[models] def upperRightBottomLeftWinner: Option[Winner] = {
     for {
       player <- Cell.sameMark(upperRightBottomLeftDiagonal)
-    } yield Winner(player, NE_SW_DiagonalLine)
+    } yield Winner(player, UpperRightToBottomLeftLine)
   }
 
   private[models] def somebodyCanWinInTheUpperRightBottomLeftDiagonal: Boolean =

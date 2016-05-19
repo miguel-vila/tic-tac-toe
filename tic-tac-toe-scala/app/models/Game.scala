@@ -2,8 +2,6 @@ package models
 
 import com.nicta.rng.Rng
 import exceptions.IncorrectPlayerError
-import scala.util.Random
-import scalaz.effect.IO
 
 sealed trait Game {
   def board: Board
@@ -18,12 +16,7 @@ case class ActiveGame(board: Board, currentPlayer: Player) extends Game {
 
   def hasWinner: Boolean = false
 
-  def otherPlayer: Player =
-    if(currentPlayer == PlayerX) {
-      PlayerO
-    } else {
-      PlayerX
-    }
+  def otherPlayer = currentPlayer.other
 
   def putMark(position: Position): Game = {
     val mark = currentPlayer
@@ -35,7 +28,7 @@ case class ActiveGame(board: Board, currentPlayer: Player) extends Game {
         case Some(winner) => WonGame(nextBoard, winner)
         case None =>
           if(nextBoard.somebodyCanWin) {
-            ActiveGame(nextBoard, otherPlayer)
+            ActiveGame(nextBoard, otherPlayer )
           } else {
             DrawGame(nextBoard)
           }
@@ -65,7 +58,7 @@ object Game {
         currentPlayer = player,
         board = createInitialBoard
       )
-    }).unsafePerformIO() //<- Fuck Yeah!
+    }).unsafePerformIO() // Yeah!
   }
 
 

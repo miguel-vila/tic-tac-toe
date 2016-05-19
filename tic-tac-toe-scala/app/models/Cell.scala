@@ -1,8 +1,5 @@
 package models
 
-/**
- * Created by mglvl on 24/01/15.
- */
 case class Cell(mark: Option[Player], position: Position)
 
 object Cell {

@@ -61,7 +61,7 @@ with ImplicitSender {
 
       playerX.send(gameActor, playAt(2,2))
       playerO.expectMsg(PlayerPutAMarkInPosition(PlayerX,Position(2,2)))
-      val gameWon = GameWon(Winner(PlayerX, NW_SE_DiagonalLine))
+      val gameWon = GameWon(Winner(PlayerX, UpperLeftToBottomRightLine))
       playerO.expectMsg(gameWon)
       playerX.expectMsg(gameWon)
     }

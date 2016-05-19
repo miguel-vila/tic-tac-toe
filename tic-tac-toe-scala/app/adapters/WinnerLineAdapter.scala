@@ -12,8 +12,8 @@ object WinnerLineAdapter {
     winnerLine match {
       case RowLine(row) => Json.obj("dimension" -> "x", "position" -> row)
       case ColumnLine(column) => Json.obj("dimension" -> "y", "position" -> column)
-      case NW_SE_DiagonalLine => Json.obj("dimension" -> "NW_SE_Diagonal")
-      case NE_SW_DiagonalLine => Json.obj("dimension" -> "NE_SW_Diagonal")
+      case UpperLeftToBottomRightLine => Json.obj("dimension" -> "NW_SE_Diagonal")
+      case UpperRightToBottomLeftLine => Json.obj("dimension" -> "NE_SW_Diagonal")
     }
   }
 
